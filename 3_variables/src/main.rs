@@ -21,7 +21,7 @@ fn main() {
     let spaces = " ";
     let spaces = spaces.len();
 
-    println!("space len: {}", spaces)
+    println!("space len: {}", spaces);
     // 错误
     // let mut spaces = " ";
     // spaces = spaces.len();
@@ -76,38 +76,5 @@ fn main() {
     // 访问数组元素
     println!("{} {} {} {} ", a[0], a[1], a[2], a[3]);
 
-    // 调用其他方法
-    another_function(5);
 
-    // 在Rust中存在语句和表达式的概念
-    // 语句指的是: 执行操作 但是没有返回值的操作
-    // 表达式则是: 会进行计算并产生一个值作为结果的指令
-
-    // 语句
-    let y = 6;
-    // 而以下是错误的  因为语句没有返回值 所以不能进行赋值
-    // let x = (let y = 6);
-
-    // 而以下的操作可以进行  因为返回的是一个表达式
-    // 因为结尾处的 "x + 1" 没有带上分号 表示为这个表达式的返回
-    // 如果我们加上了分号 那么这个表达式就没有返回  将会抛错
-    let x = 5;
-    let y = {
-        let x = 3;
-        x + 1
-    };
-    println!("The value of y is: {}", y);
-
-
-
-}
-
-// 声明方法
-fn another_function(x: i32) {
-    println!("The value of x is: {}", x);
-}
-
-
-fn five() -> i32 {
-    5
 }
