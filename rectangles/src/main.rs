@@ -13,13 +13,16 @@ impl Rectangle {
     fn can_hold(&self, other: &Rectangle) -> bool {
         self.width > other.width && self.height > other.height
     }
+
+}
+// 可以有多个impl块
+impl Rectangle {
     // 这种不传入&self叫做函数
     fn square(size: u32) -> Rectangle {
         Rectangle { width: size, height: size }
     }
 
 }
-
 fn main() {
     let rect1 = Rectangle {
         width: 30,
