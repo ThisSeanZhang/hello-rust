@@ -5,9 +5,19 @@ struct Rectangle {
 }
 
 impl Rectangle {
+    // 这种传入&self叫做方法
     fn area(&self) -> u32 {
         self.width * self.height
     }
+
+    fn can_hold(&self, other: &Rectangle) -> bool {
+        self.width > other.width && self.height > other.height
+    }
+    // 这种不传入&self叫做函数
+    fn square(size: u32) -> Rectangle {
+        Rectangle { width: size, height: size }
+    }
+
 }
 
 fn main() {
