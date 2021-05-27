@@ -24,3 +24,37 @@ fn main() {
 
 }
 
+pub fn notify(item: impl Summary) {
+    println!("Breaking news! {}", item.summarize());
+}
+
+// 完整形式
+// pub fn notify<T: Summary>(item: T) {
+//     println!("Breaking news! {}", item.summarize());
+// }
+
+// 多个参数
+// pub fn notify(item1: impl Summary, item2: impl Summary)
+// pub fn notify<T: Summary>(item1: T, item2: T)
+
+// 多种类型的约束
+// pub fn notify(item: impl Summary + Display)
+// pub fn notify<T: Summary + Display>(item: T)
+
+// 使用where 进行约束
+// fn some_function<T: Display + Clone, U: Clone + Debug>(t: T, u: U) -> i32
+// fn some_function<T, U>(t: T, u: U) -> i32
+//     where T: Display + Clone,
+//           U: Clone + Debug
+// {
+
+
+/// 不仅传入可以使用trail, 返回值同样也可以
+fn returns_summarizable() -> impl Summary {
+    Tweet {
+        username: String::from("horse_ebooks"),
+        content: String::from("of course, as you probably already know, people"),
+        reply: false,
+        retweet: false,
+    }
+}
