@@ -1,8 +1,12 @@
 mod trait_demo;
+mod trait_demo2;
 
 use crate::trait_demo::*;
-
+use crate::trait_demo2::CCC;
+use crate::trait_demo2::ToWhat;
+// use crate::trait_demo2;
 fn main() {
+
     println!("Hello, world!");
     let tweet = Tweet {
         username: String::from("horse_ebooks"),
@@ -22,6 +26,9 @@ fn main() {
     };
     println!("New article available! {}", article.summarize());
 
+
+    let p = trait_demo2::Pair::new(1, 2);
+    p.doCcc();
 }
 
 pub fn notify(item: impl Summary) {
