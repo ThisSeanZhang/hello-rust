@@ -3,7 +3,7 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     println!("{:?}", args);
 
-    let config = parse_config(&[String::from("target\\debug\\minigrep.exe"), String::from("something"), String::from("poem.txt")]);
+    let config = Config::new(&[String::from("target\\debug\\minigrep.exe"), String::from("something"), String::from("poem.txt")]);
 
     println!("Searching for {}", config.query);
     println!("In file {}", config.filename);
@@ -19,12 +19,14 @@ struct Config {
     filename: String
 }
 
-fn parse_config(args: &[String]) -> Config {
-    let query = args[1].clone();
-    let filename = args[2].clone();
+impl Config {
+    fn new(args: &[String]) -> Config {
+        let query = args[1].clone();
+        let filename = args[2].clone();
 
-    Config {
-        query,
-        filename
+        Config {
+            query,
+            filename
+        }
     }
 }
