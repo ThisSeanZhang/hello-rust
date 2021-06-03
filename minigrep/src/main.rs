@@ -6,7 +6,11 @@ fn main() {
     let args: Vec<String> = env::args().collect();
     println!("{:?}", args);
 
-    let args = [String::from("target\\debug\\minigrep.exe"), String::from("something"), String::from("poem.txt")];
+    let args = [
+        String::from("target\\debug\\minigrep.exe"),
+        String::from("frog"),
+        String::from("poem.txt")
+    ];
     let config = Config::new(&args).unwrap_or_else(|err| {
         println!("Problem parsing arguments: {}", err);
         process::exit(1);
