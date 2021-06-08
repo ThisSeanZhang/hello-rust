@@ -7,7 +7,7 @@ fn main() {
 
     let args = [
         String::from("target\\debug\\minigrep.exe"),
-        String::from("frog"),
+        String::from("to"),
         String::from("poem.txt")
     ];
     let config = Config::new(&args).unwrap_or_else(|err| {
