@@ -8,6 +8,9 @@ fn main() {
         simulated_user_specified_value,
         simulated_random_number
     );
+    let six: u32 = 6;
+let compare= equal_5();
+    println!("eq {}", compare(six))
 }
 
 struct Cacher<T>
@@ -88,4 +91,11 @@ fn test() {
     // let example_closure = |x| x;
     // let s = example_closure(String::from("hello"));
     // let n = example_closure(5);
+}
+
+// 使用闭包的特性
+fn equal_5<T>() -> T
+    where T: Fn(u32) -> bool {
+    let x:u32 = 5;
+    |z| z == x
 }
