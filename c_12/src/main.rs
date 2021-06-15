@@ -9,7 +9,7 @@ fn main() {
         simulated_random_number
     );
     let six: u32 = 6;
-let compare= equal_5();
+    let compare= equal_5();
     println!("eq {}", compare(six))
 }
 
@@ -94,8 +94,9 @@ fn test() {
 }
 
 // 使用闭包的特性
-fn equal_5<T>() -> T
-    where T: Fn(u32) -> bool {
+// 为什么不能直接使用Fn(u32) -> bool 作为返回
+// https://stackoverflow.com/questions/67945027/return-closures-but-cannot-infer-type
+fn equal_5() -> impl Fn(u32) -> bool {
     let x:u32 = 5;
-    |z| z == x
+    move |z| z == x
 }
