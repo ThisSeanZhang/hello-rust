@@ -1,3 +1,4 @@
+mod counter;
 #[cfg(test)]
 mod tests {
 
@@ -19,3 +20,4 @@ mod tests {
         assert_eq!(total, 6);
     }
 }
+
