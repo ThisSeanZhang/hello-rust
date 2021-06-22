@@ -42,11 +42,16 @@ mod tests {
             MockMessenger { sent_messages: RefCell::new(vec![]) }
         }
     }
+    // 在同一个作用域中创建两个可变引用，这会使 RefCell<T>引发panic
     impl Messenger for MockMessenger {
-    fn send(&self, message: &str) {
-        self.sent_messages.borrow_mut().push(String::from(message));
+        fn send(&self, message: &str) {
+            let mut one_borrow = self.sent_messages.borrow_mut();
+            let mut two_borrow = self.sent_messages.borrow_mut();
+            one_borrow.push(String::from(message));
+            two_borrow.push(String::from(message));
+        }
     }
-}
+
     #[test]
     fn it_sends_an_over_75_percent_warning_message() {
     let mock_messenger = MockMessenger::new();
