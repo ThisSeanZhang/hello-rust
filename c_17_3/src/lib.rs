@@ -37,6 +37,10 @@ trait State {
     fn content<'a>(&self, post: &'a Post) -> &'a str {
         ""
     }
+
+    fn reject(self: Box<Self>) -> Box<dyn State> {
+        self
+    }
 }
 struct Draft {}
 impl State for Draft {
@@ -57,6 +61,9 @@ impl State for PendingReview {
         Box::new(Published {})
     }
 
+    fn reject(self: Box<Self>) -> Box<dyn State> {
+        Box::new(Draft {})
+    }
 }
 
 struct Published {}
