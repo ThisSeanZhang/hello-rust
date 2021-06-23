@@ -22,9 +22,9 @@ fn main() {
     for handle in handles {
         handle.join().unwrap();
     }
-    let a = counter.lock().unwrap();
-    let b = *counter;
-    let a = b.lock().unwrap();
+    // let a = counter.lock().unwrap();
+    // let b = *counter;
+    // let a = b.lock().unwrap();
     println!("Result: {}", *counter.lock().unwrap());
 }
 
