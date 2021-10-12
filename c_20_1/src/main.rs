@@ -8,9 +8,9 @@ fn main() {
     let listener = TcpListener::bind("127.0.0.1:25565").unwrap();
     for stream in listener.incoming() {
         let stream = stream.unwrap();
-        println!("Connection established!\n");
-        handle_connection(stream);
-        println!("\n");
+        thread::spawn(|| {
+            handle_connection(stream);
+        });
     }
 }
 
