@@ -9,9 +9,9 @@ fn main() {
 
     // 常量的定义
     const MAX_POINTS: u32 = 100_000;
+    println!("The const MAX_POINTS is: {}", MAX_POINTS);
 
-    // 隐藏
-
+    // 隐藏: 重复使用let关键字,隐藏该变量名之前的值
     let x = 5;
     let x = x + 1;
     let x = x * 2;
@@ -22,7 +22,7 @@ fn main() {
     let spaces = spaces.len();
 
     println!("space len: {}", spaces);
-    // 错误
+    // 无法使用mut进行模拟
     // let mut spaces = " ";
     // spaces = spaces.len();
 
