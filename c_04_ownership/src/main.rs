@@ -1,4 +1,14 @@
 fn main() {
+
+    {
+        let s1 = String::from("hello");
+        // 当进行赋值时,仅对栈上的指针进行复制,并不会对存储在堆上的数据进行复制
+        let s2 = s1;
+        println!("s2:{}", s2);
+    }// 因为离开时会drop相关变量
+    // 如果s1还指向对应的堆,那么就会造成重复drop,所以在复制后s1将不可用
+    // 保证了只有一个指针指向对应的堆
+
     {
         let s = String::from("hello");
     
@@ -11,12 +21,14 @@ fn main() {
     }
     // x首先离开作用域
     // 因为s的值已经发生了移动,所以此处不会进行操作
-    
+
     {
         let s1 = give_ownership();
+        println!("s1:{}", s1);
         let s2 = String::from("hello");
 
         let s3 = takes_and_gives_back(s2);
+        println!("s3:{}", s3);
         // s2 传入 又被归还
     }
     // s3先进行销毁
