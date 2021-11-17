@@ -1,5 +1,5 @@
 [package]
-name = "enum_demo"
+name = "c_06_enum"
 version = "0.1.0"
 authors = ["ThisSeanZhang <thisseanzhang@gmail.com>"]
 edition = "2018"
