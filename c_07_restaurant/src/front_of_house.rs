@@ -5,7 +5,4 @@ mod front_of_house {
         fn serve_order() {}
         fn take_payment() {}
     }
-
-
-
 }
