@@ -1,5 +1,5 @@
 [package]
-name = "lifetime_static"
+name = "c_10_lifetime_static"
 version = "0.1.0"
 authors = ["ThisSeanZhang <thisseanzhang@gmail.com>"]
 edition = "2018"
