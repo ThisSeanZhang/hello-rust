@@ -33,4 +33,5 @@ fn main() {
   println!("The area of the rectangle is {} square pixels.", rect1.area());
   println!("{}{}", rect1.height, rect1.width);
   println!("can_hold: {}", rect1.can_hold(rect2));
+  println!("can_hold: {}", Rectangle::can_hold(rect2,&rect1));
 }
