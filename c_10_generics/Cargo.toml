@@ -1,5 +1,5 @@
 [package]
-name = "trail_demo"
+name = "c_10_generics"
 version = "0.1.0"
 authors = ["ThisSeanZhang <thisseanzhang@gmail.com>"]
 edition = "2018"
