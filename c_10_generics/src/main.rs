@@ -1,3 +1,5 @@
+mod pare_point;
+
 fn main() {
     let number_list = vec![34, 50, 25, 100, 65];
     println!("The largest number is {}", largest(&number_list));
@@ -15,6 +17,14 @@ fn main() {
     // println!("distance_from_origin = {}", both_integer.distance_from_origin());
     // 以下因为x,y的类型不匹配  将会抛错
     // let integer_and_float = Point { x: 5, y: 4.0 };
+    pare_point_main();
+}
+
+fn pare_point_main() {
+    let p1 = pare_point::Point { x: 5, y: 10.4 };
+    let p2 = pare_point::Point { x: "Hello", y: 'c'};
+    let p3 = p1.mixup(p2);
+    println!("p3.x = {}, p3.y = {}", p3.x, p3.y);
 }
 
 // fn largest<T: PartialOrd + Copy>(list: &[T]) -> T {
