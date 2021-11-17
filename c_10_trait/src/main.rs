@@ -7,6 +7,7 @@ fn main() {
     println!("The largest char is {}", result);
 
     let both_integer = Point { x: 5, y: 10 };
+    println!("{:?}", both_integer);
     let both_float = Point { x: 1.0, y: 4.0 };
     println!("p.x = {}", both_float.x());
     println!("distance_from_origin = {}", both_float.distance_from_origin());
@@ -35,16 +36,17 @@ fn largest<T: PartialOrd>(list: &[T]) -> &T {
     }
     largest
 }
-fn largest_char(list: &[char]) -> char {
-    let mut largest = list[0];
-    for &item in list.iter() {
-        if item > largest {
-            largest = item;
-        }
-    }
-    largest
-}
+// fn largest_char(list: &[char]) -> char {
+//     let mut largest = list[0];
+//     for &item in list.iter() {
+//         if item > largest {
+//             largest = item;
+//         }
+//     }
+//     largest
+// }
 
+#[derive(Debug)]
 struct Point<T> {
     x: T,
     y: T,
