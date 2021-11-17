@@ -1,3 +1,8 @@
+/**
+* 任意一段给定的时间,你要么只能拥有一个可变引用,
+* 要么只能拥有任意数量的不可变引用,
+* 引用总是有效的
+*/
 fn main() {
     let s1 = String::from("hello");
     let len = calculate_length(&s1); // 在不转移所有权的情况下，创建一个s1值的引用
@@ -19,10 +24,12 @@ fn main() {
 
     let mut s4 = String::from("hello");
     {
-        let r11 = &mut s4;
-
+        let _r11 = &mut s4;
+        println!("{}", _r11);
+        *_r11 = String::from("world");
     } // 由于 r11 在这里离开了作用域，所以我们可以合法地再创建一个可变引用。
-    let r12 = &mut s4;
+    let _r12 = &mut s4;
+    println!("{}", _r12)
 
 
     // 不可变引用可以出现多次,但不能和可变引用混用
@@ -35,7 +42,7 @@ fn main() {
 
     // 垂直指针
     // 指向了曾经存在某处内存地址
-    let reference_to_nothing = dangle();
+    // let reference_to_nothing = dangle();
 
 }
 fn calculate_length(s: &String) -> usize {
@@ -49,12 +56,7 @@ fn change(some_string: &mut String) {
 }
 
 // 返回包含了一个借用,但是要被借用的值已经不存在了
-fn dangle() -> &String {
-    let s = String::from("hello");
-    &s // 返回s的借用
-} // 因为此处就要将s进行销毁了
-
-/**
-* 任意一段给定的时间,你要么只能拥有一个可变引用,要么只能拥有任意数量的不可变引用
-* 引用总是有效的
-*/
+// fn dangle() -> &String {
+//     let s = String::from("hello");
+//     &s // 返回s的借用
+// }// 因为此处将s销毁了, 引用其实是失效的
