@@ -24,12 +24,15 @@ impl Rectangle {
 
 }
 
-fn main() {
+pub fn rectangle_main() {
   let rect1 = Rectangle {
     width: 30,
     height: 50
   };
-  let rect2 = &Rectangle::square(5);
+  let rect2 = &Rectangle {
+    width: 3,
+    height: 5
+  };
   println!("The area of the rectangle is {} square pixels.", rect1.area());
   println!("{}{}", rect1.height, rect1.width);
   println!("can_hold: {}", rect1.can_hold(rect2));

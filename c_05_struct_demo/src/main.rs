@@ -1,14 +1,11 @@
-
 // 定义一个结构体
+#[derive(Debug)]
 struct User {
     username: String,
     email: String,
     sign_in_count: u64,
     active: bool,
 }
-
-
-
 
 fn main() {
     println!("Hello, world!");
@@ -19,6 +16,7 @@ fn main() {
         active: true,
         sign_in_count: 1,
     };
+    println!("{:?}", user);
     let mut user1 = User {
         username: String::from("someusername123"),
         email: String::from("someone@example.com"),
@@ -26,6 +24,7 @@ fn main() {
         sign_in_count: 1,
     };
     user1.email = String::from("anotheremail@example.com");
+    user1.username = String::from("anothername123");
 
 
     // 也可以使用之前的对象旧值进行创建新实例
@@ -35,33 +34,39 @@ fn main() {
         active: user1.active,
         sign_in_count: user1.sign_in_count,
     };
+    println!("{:?}", user2);
     let user2 = User {
         email: String::from("another@example.com"),
         username: String::from("anotherusername567"),
         ..user1
     };
+    println!("{:?}", user2);
 
     // 定义元组结构体
+    #[derive(Debug)]
     struct Color(i32, i32, i32);
+    #[derive(Debug)]
     struct Point(i32, i32, i32);
     let black = Color(0, 0, 0);
     let origin = Point(0, 0, 0);
+    println!("{:?}", black);
+    println!("{:?}", origin);
 }
 
-fn build_user(email: String, username: String) -> User {
-    User {
-        email: email,
-        username: username,
-        active: true,
-        sign_in_count: 1,
-    }
-}
-// 在变量名与字段名相同时使用简化版的字段初始化方法
-fn build_user_2(email: String, username: String) -> User {
-    User {
-        email,
-        username,
-        active: true,
-        sign_in_count: 1,
-    }
-}
+// fn build_user(email: String, username: String) -> User {
+//     User {
+//         email: email,
+//         username: username,
+//         active: true,
+//         sign_in_count: 1,
+//     }
+// }
+// // 在变量名与字段名相同时使用简化版的字段初始化方法
+// fn build_user_2(email: String, username: String) -> User {
+//     User {
+//         email,
+//         username,
+//         active: true,
+//         sign_in_count: 1,
+//     }
+// }
