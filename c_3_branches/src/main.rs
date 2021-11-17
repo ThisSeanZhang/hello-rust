@@ -65,10 +65,16 @@ fn main() {
 
     // 使用for进行集合的遍历
 
-    let a = [10, 20, 30, 40, 50];
+    let mut a = [10, 20, 30, 40, 50];
     for element in a.iter() {
         println!("the value is: {}", element);
     }
+
+    for element in &mut a {
+        *element = *element - 5;
+        println!("the value is: {}", element);
+    }
+    println!("after change arr{:?}", a);
 
     // 使用rev翻转Range产生的序列
     for number in (1..4).rev() {
