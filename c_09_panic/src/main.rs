@@ -51,24 +51,28 @@ fn main() {
         // }
 
         // 使用?运算符将错误返回给调用者函数
-        /**
-         * 使用?运算符
-         * 错误将会作为方法的返回值,如同使用了return
-         * 成功将会作为这个表达式的结果
-         * 使用了？运算符的函数必须返回Result、Option或任何实现了std::ops::Try的类型
-         */
+
+        // 使用?运算符
+        // 错误将会作为方法的返回值,如同使用了return
+        // 成功将会作为这个表达式的结果
+        // 使用了？运算符的函数必须返回Result、Option或任何实现了std::ops::Try的类型
         let mut f = File::open("hello.txt")?;
         let mut s = String::new();
         f.read_to_string(&mut s)?;
         Ok(s)
     }
 
-    read_username_from_file();
+    if let Ok(s) = read_username_from_file() {
+        println!("{}", s);
+    }
+    if let Ok(s) = read_username_from_file2() {
+        println!("{}", s);
+    }
 }
 /**
 * 还可以通过链式方法进行简化
  */
-fn read_username_from_file() -> Result<String, io::Error> {
+fn read_username_from_file2() -> Result<String, io::Error> {
     let mut s = String::new();
     File::open("hello.txt")?.read_to_string(&mut s)?;
     Ok(s)
@@ -78,16 +82,16 @@ fn read_username_from_file() -> Result<String, io::Error> {
 }
 
 
-fn main2() -> () {
-    let f = File::open("hello.txt")?;
-}
+// fn main2() -> () {
+//     let f = File::open("hello.txt")?;
+// }
 /*
 这里的Box<dyn Error>被称作trait对象，我们将在第17章讨论
 它。现在，你可以简单地将Box<dyn Error>理解为“任何可能的错
 误类型”。在拥有这种返回类型的main函数中使用？运算符是合法
 的
  */
-fn main3() -> Result<(), Box<dyn Error>> {
-    let f = File::open("hello.txt")?;
-    Ok(())
-}
+// fn main3() -> Result<(), Box<dyn Error>> {
+//     let f = File::open("hello.txt")?;
+//     Ok(())
+// }
