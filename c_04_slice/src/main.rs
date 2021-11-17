@@ -3,6 +3,7 @@ fn main() {
 
     let hello = &s[0..5];
     let world = &s[6..11];
+    println!("{} {}!", hello, world);
 
     // 以下的值都相同
     let slice1 = &s[0..2];
@@ -23,12 +24,15 @@ fn main() {
     let my_string = String::from("hello world");
     // first_word 可以接收String对象的切片作为参数
     let word = first_word(&my_string[..]);
+    println!("{}", word);
     let my_string_literal = "hello world";
     // first_word 可以接收字符串字面量的切片作为参数
     let word = first_word(&my_string_literal[..]);
+    println!("{}", word);
     // 由于字符串字面量本身就是切片，所以我们可以在这里直接将它传入函数，
     // 而不需要使用额外的切片语法！
     let word = first_word(my_string_literal);
+    println!("{}", word);
 }
 
 fn first_word(s: &str) -> &str {
