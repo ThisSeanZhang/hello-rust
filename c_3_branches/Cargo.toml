@@ -1,5 +1,5 @@
 [package]
-name = "branches"
+name = "c_3_branches"
 version = "0.1.0"
 authors = ["ThisSeanZhang <thisseanzhang@gmail.com>"]
 edition = "2018"
