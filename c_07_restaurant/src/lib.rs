@@ -6,7 +6,7 @@ pub fn eat_at_restaurant() {
     // 相对路径
     self::front_of_house::hosting::add_to_waitlist();
     front_of_house::hosting::add_to_waitlist();
-
+    front_of_house::serving::take_order();
     // 选择黑麦面包作为夏季早餐
     let mut meal = back_of_house::Breakfast::summer("Rye");
     // 修改我们想要的面包类型
