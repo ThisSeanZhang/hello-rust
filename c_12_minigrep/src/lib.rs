@@ -8,7 +8,7 @@ pub struct Config {
 
 impl Config {
     pub fn new(mut args: std::env::Args) -> Result<Config, &'static str> {
-        args.next();
+        args.next(); // 第一个值是程序本身的名称
         let query = match args.next() {
             Some(arg) => arg,
             None => return Err("Didn't get a query string"),
