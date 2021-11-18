@@ -1,5 +1,5 @@
 [package]
-name = "test_adder"
+name = "c_11_test_adder"
 version = "0.1.0"
 authors = ["ThisSeanZhang <thisseanzhang@gmail.com>"]
 edition = "2018"
