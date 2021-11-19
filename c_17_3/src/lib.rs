@@ -38,9 +38,7 @@ trait State {
         ""
     }
 
-    fn reject(self: Box<Self>) -> Box<dyn State> {
-        self
-    }
+    fn reject(self: Box<Self>) -> Box<dyn State>;
 }
 struct Draft {}
 impl State for Draft {
@@ -48,6 +46,10 @@ impl State for Draft {
         Box::new(PendingReview {})
     }
     fn approve(self: Box<Self>) -> Box<dyn State> {
+        self
+    }
+
+    fn reject(self: Box<Self>) -> Box<dyn State>  {
         self
     }
 }
@@ -77,5 +79,9 @@ impl State for Published {
 
     fn content<'a>(&self, post: &'a Post) -> &'a str {
         &post.content
+    }
+
+    fn reject(self: Box<Self>) -> Box<dyn State>  {
+        self
     }
 }
