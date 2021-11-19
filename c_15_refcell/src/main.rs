@@ -1,3 +1,4 @@
+// 将Rc<T>和RefCell<T>结合使用来实现一个拥有多重所有权的可变数据
 #[derive(Debug)]
 enum List {
     Cons(Rc<RefCell<i32>>, Rc<List>),
