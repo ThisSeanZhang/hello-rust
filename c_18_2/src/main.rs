@@ -1,13 +1,13 @@
 
 fn main() {
 
-    /// 使用 _ 忽略整个值
+    // 使用 _ 忽略整个值
     fn foo(_: i32, y: i32) {
         println!("This code only uses the y parameter: {}", y);
     }
     foo(3, 4);
 
-    /// 忽略值的某些部分
+    // 忽略值的某些部分
     let mut setting_value = Some(5);
     let new_setting_value = Some(10);
     match (setting_value, new_setting_value) {
@@ -20,7 +20,7 @@ fn main() {
     }
     println!("setting is {:?}", setting_value);
 
-    /// 忽略多个特定值
+    // 忽略多个特定值
     let numbers = (2, 4, 8, 16, 32);
     match numbers {
         (first, _, third, _, fifth) => {
@@ -28,12 +28,12 @@ fn main() {
         },
     }
 
-    /// 使用 _ 开头的变量,进行规避未使用变量警告
+    // 使用 _ 开头的变量,进行规避未使用变量警告
     let _x = 5; // 以下画线开始的变量名可以避免触发变量未使用警告
     let y = 10;
 
-    ///使用以下画线开头的变量名与仅仅使用_作为变量名存在一个细微的差别：
-    /// _x语法仍然将值绑定到了变量上，而_则完全不会进行绑定
+    //使用以下画线开头的变量名与仅仅使用_作为变量名存在一个细微的差别：
+    // _x语法仍然将值绑定到了变量上，而_则完全不会进行绑定
     let s = Some(TestDrop{str: String::from("test")});
     if let Some(_s) = s { // 此处会将s内字符的所有权移到_s
         println!("匹配内部");
@@ -70,7 +70,7 @@ fn main() {
     //     },
     // }
 
-    /// 在模式上添加一个匹配守卫
+    // 在模式上添加一个匹配守卫
     let num = Some(4);
     match num {
         Some(x) if x < 5 => println!("less than five: {}", x),

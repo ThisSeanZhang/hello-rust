@@ -1,16 +1,16 @@
-use alloc::slice;
+use std::slice;
 
 fn main() {
-    /// 通过引用创建裸指针
+    // 通过引用创建裸指针
     let mut num = 5;
     let r1 = &num as *const i32;
     let r2 = &mut num as *mut i32;
 
-    /// 创建一个指向任意内存地址的裸指针
+    // 创建一个指向任意内存地址的裸指针
     let address = 0x012345usize;
     let r = address as *const i32;
 
-    /// 在unsafe块中解引用裸指针
+    // 在unsafe块中解引用裸指针
     let mut num = 5;
     let r1 = &num as *const i32;
     let r2 = &mut num as *mut i32;
@@ -20,8 +20,8 @@ fn main() {
     }
 
 
-    /// 不安全的函数或方法
-    ///
+    // 不安全的函数或方法
+    //
     unsafe fn dangerous() {}
     unsafe {
         dangerous();
@@ -29,7 +29,7 @@ fn main() {
 
 
 
-    /// 使用extern函数调用外部代码
+    // 使用extern函数调用外部代码
     extern "C" {
         fn abs(input: i32) -> i32;
     }
@@ -37,7 +37,7 @@ fn main() {
         println!("Absolute value of -3 according to C: {}", abs(-3));
     }
 
-    /// 定义可被C调用的代码
+    // 定义可被C调用的代码
     #[no_mangle]
     pub extern "C" fn call_from_c() {
         println!("Just called a Rust function from C!");
@@ -46,8 +46,8 @@ fn main() {
 
 }
 
-/// 以下代码不能运行
-/// Rust的借用检查器无法理解我们正在借用一个切片的不同部分
+// 以下代码不能运行
+// Rust的借用检查器无法理解我们正在借用一个切片的不同部分
 fn split_at_mut(slice: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
     let len = slice.len();
     assert!(mid <= len);
@@ -68,8 +68,8 @@ fn split_at_mut2(slice: &mut [i32], mid: usize) -> (&mut [i32], &mut [i32]) {
         slice::from_raw_parts_mut(ptr.offset(mid as isize), len - mid))
     }
 }
-/// 基于任意内存地址创建一个切片
-/// 这段代码试图用一个随意的内存地址来创建拥有10 000个元素的切片 可能导致崩溃
+// 基于任意内存地址创建一个切片
+// 这段代码试图用一个随意的内存地址来创建拥有10 000个元素的切片 可能导致崩溃
 fn error_demo() {
     let address = 0x01234usize;
     let r = address as *mut i32;

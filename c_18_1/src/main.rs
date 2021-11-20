@@ -32,8 +32,8 @@ fn main() {
         println!("{} is at index {}", value, index);
     }
 
-    /// 模式语法
-    /// 1. 匹配字面量
+    // 模式语法
+    // 1. 匹配字面量
     let x = 1;
     match x {
         1 => println!("one"),
@@ -42,8 +42,8 @@ fn main() {
         _ => println!("anything"),
     }
 
-    /// 2. 匹配变量名
-    /// 定义在match表达式内作为模式一部分的变量会覆盖掉match结构外的同名变量
+    // 2. 匹配变量名
+    // 定义在match表达式内作为模式一部分的变量会覆盖掉match结构外的同名变量
     let x = Some(5);
     let y = 10;
     match x {
@@ -53,7 +53,7 @@ fn main() {
     }
     println!("at the end: x = {:?}, y = {:?}", x, y);
 
-    /// 3. 多重模式
+    // 3. 多重模式
     let x = 1;
     match x {
         1 | 2 => println!("one or two"),
@@ -61,7 +61,7 @@ fn main() {
         _ => println!("anything"),
     }
 
-    /// 4. 使用...来匹配值区间
+    // 4. 使用...来匹配值区间
     let x = 5;
     match x {
         1 ... 5 => println!("one through five"),
@@ -75,7 +75,7 @@ fn main() {
         _ => println!("something else"),
     }
 
-    /// 5. 使用结构分析值
+    // 5. 使用结构分析值
     let p = Point { x: 0, y: 7 };
     let Point { x: a, y: b } = p;
     assert_eq!(0, a);
@@ -86,7 +86,7 @@ fn main() {
         Point { x, y } => println!("On neither axis: ({}, {})", x, y),
     }
 
-    /// 6. 结构枚举
+    // 6. 结构枚举
     let msg = Message::ChangeColor(Color::Rgb(1,2,3));
     match msg {
         Message::Quit => {
@@ -104,7 +104,7 @@ fn main() {
         }
     }
 
-    /// 进行复杂解构
+    // 进行复杂解构
     let ((feet, inches), Point {x, y}) = ((3, 10), Point { x: 3, y: -10 });
 
 }
