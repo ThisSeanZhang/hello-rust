@@ -119,4 +119,108 @@ fn main() {
     v.push(3);
     assert_eq!(v.len(), 3);
     assert_eq!(v.capacity(), 4);
+
+
+    let mut v = vec![10, 20, 30, 40, 50];
+    // Make the element at index 3 be 35.
+    v.insert(3, 35);
+    assert_eq!(v, [10, 20, 30, 35, 40, 50]);
+    // Remove the element at index 1.
+    v.remove(1);
+    assert_eq!(v, [10, 30, 35, 40, 50]);
+
+    let mut v = vec!["carmen", "miranda"];
+    assert_eq!(v.pop(), Some("miranda"));
+    assert_eq!(v.pop(), Some("carmen"));
+    assert_eq!(v.pop(), None);
+
+    // Get our command-line arguments as a vector of Strings.
+    let languages: Vec<String> = std::env::args().skip(1).collect();
+    for l in languages {
+        println!("{}: {}", l,
+            if l.len() % 2 == 0 {
+                "functional"
+            } else {
+                "imperative"
+            }
+        );
+    }
+
+
+    // Slices
+    let v: Vec<f64> = vec![0.0, 0.707, 1.0, 0.707];
+    let a: [f64; 4] = [0.0, -0.707, -1.0, -0.707];
+    let sv: &[f64] = &v;
+    let sa: &[f64] = &a;
+
+    fn print(n: &[f64]) {
+        for elt in n {
+            println!("{}", elt);
+        }
+    }
+    print(&v); // works on vectors
+    print(&a); // works on arrays
+
+    print(&v[0..2]); // print the first two elements of v
+    print(&a[2..]); // print elements of a starting with a[2]
+    print(&sv[1..3]); // print v[1] and v[2]
+    print(&sa[..]);
+
+    println!("In the room the women come and go,
+    Singing of Mount Abora");
+
+    println!(r#"In the room the women come and go,
+  Singing of Mount Abora"#);
+
+    println!("It was a bright, col\
+    d day in April, and \
+    there were four of us—\
+    more or less.");
+
+    let default_win_install_path = r"C:\Program Files\Gorillas";
+    // let pattern = Regex::new(r"\d+(\.\d+)*");
+
+    println!(r###"
+This raw string started with 'r###"'.
+Therefore it does not end until we reach a quote mark ('"')
+followed immediately by three pound signs ('###'):
+"###);
+    println!(r###"
+    This raw string started with 'r###"'.
+    Therefore it does not end until we reach a quote mark ('"')
+    followed immediately by three pound signs ('###'):
+    "###);
+
+    println!(r###"
+        This raw string started with 'r###"'.
+        Therefore it does not end until we reach a quote mark ('"')
+        followed immediately by three pound signs ('###'):
+        "###);
+
+
+    // Byte Strings
+
+    let method = b"GET";
+    assert_eq!(method, &[b'G', b'E', b'T']);
+
+    // assert_eq!("޵_޵".len(), 7); // 可能是复制之后字符发生了变化
+    // assert_eq!("޵_޵".chars().count(), 3);
+
+    // only make_ascii_uppercase and make_ascii_lowercase allow in &str
+    let error_message = "too many pets".to_string();
+    assert_eq!(format!("{}°{:02}′{:02}″N", 24, 5, 23), "24°05′23″N".to_string());
+
+    let bits = vec!["veni", "vidi", "vici"];
+    assert_eq!(bits.concat(), "venividivici");
+    assert_eq!(bits.join(", "), "veni, vidi, vici");
+
+    assert!("ONE".to_lowercase() == "one");
+    assert!("peanut".contains("nut"));
+    assert_eq!("޵_޵".replace("޵", "■"), "■_■");
+    assert_eq!(" clean\n".trim(), "clean");
+    for word in "veni, vidi, vici".split(", ") {
+        assert!(word.starts_with("v"));
+    }
+
+    
 }
