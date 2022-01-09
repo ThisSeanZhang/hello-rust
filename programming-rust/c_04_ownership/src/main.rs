@@ -74,4 +74,34 @@ fn main() {
     assert_eq!(third, "103");
     // Let's see what's left of our vector.
     assert_eq!(v, vec!["101", "104", "substitute"]);
+
+
+    let v = vec!["liberté".to_string(),
+        "égalité".to_string(),
+        "fraternité".to_string()];
+        
+    for mut s in v {
+        s.push('!');
+        println!("{}", s);
+    }
+
+    // println!("{:?}", v); // 因为V已经被移动到 for in 里了
+
+    print_field();
+}
+
+fn print_field() {
+    struct Person { name: Option<String>, birth: i32 }
+    let mut composers = Vec::new();
+    composers.push(Person { name: Some("Palestrina".to_string()),
+    birth: 1525 });
+    // let first_name = composers[0].name; // 不能直接这样获取
+
+    let first_name = std::mem::replace(&mut composers[0].name, None);
+    assert_eq!(first_name, Some("Palestrina".to_string()));
+    assert_eq!(composers[0].name, None);
+
+    let first_name = composers[0].name.take();
+    
+    assert_eq!(first_name, None);
 }
