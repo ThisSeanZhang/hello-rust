@@ -105,3 +105,15 @@ fn print_field() {
     
     assert_eq!(first_name, None);
 }
+
+#[test]
+fn copy_type() {
+    struct Label { number: u32 }
+    fn print(l: Label) {
+        println!("STAMP: {}", l.number);
+    }
+    let l = Label { number: 3 };
+    print(l); // 因为 label 并不能拷贝, 只能将所有权进行转移
+    // println!("My label number is: {}", l.number); // 此处由于转移了所有权  就不能获取 number
+
+}
