@@ -117,3 +117,36 @@ fn copy_type() {
     // println!("My label number is: {}", l.number); // 此处由于转移了所有权  就不能获取 number
 
 }
+
+#[test]
+fn copy_type2() {
+    #[derive(Copy, Clone)]
+    struct Label { number: u32 }
+
+    // 因为String类型未实现Copy
+    // #[derive(Copy, Clone)]
+    // struct StringLabel { name: String }
+
+    fn print(l: Label) {
+        println!("STAMP: {}", l.number);
+    }
+    let l = Label { number: 3 };
+    print(l); // 因为 label 并不能拷贝, 只能将所有权进行转移
+    // println!("My label number is: {}", l.number); // 此处由于转移了所有权  就不能获取 number
+}
+
+fn reference_count() {
+    use std::rc::Rc;
+    // Rust can infer all these types; written out for clarity
+    let s: Rc<String> = Rc::new("shirataki".to_string());
+    let t: Rc<String> = s.clone();
+    let u: Rc<String> = s.clone();
+
+    // 能够像String一样使用
+    assert!(s.contains("shira"));
+    assert_eq!(t.find("taki"), Some(5));
+    println!("{} are quite chewy, almost bouncy, but lack flavor", u);
+    
+    // 但是不能进行修改
+    // s.push_str(" noodles");
+}
