@@ -1,5 +1,5 @@
 use core::borrow;
-use std::collections::HashMap;
+use std::{collections::HashMap, ops::Deref};
 
 type Table = HashMap<String, Vec<String>>;
 
@@ -187,4 +187,30 @@ fn test_string() {
     a = "b";
     println!("{}", a);
     println!("{}", b);
+}
+
+#[test]
+fn test_trait() {
+
+    #[derive(Debug)]
+    struct Node {
+        name: String
+    }
+
+    impl Deref for Node {
+        type Target = String;
+        fn deref(&self) -> &Self::Target {
+            println!("use deref fn");
+            &self.name
+        }
+    }
+
+    let node = Node { name: "node1".to_string() };
+    let ref_node = &node;
+    let ref_ref_node = &ref_node;
+    println!("print node {:?}", ref_ref_node);
+    println!("======");
+    println!("{}", ref_ref_node as &String);
+    println!("======");
+    println!("{:?}", ref_ref_node.deref());
 }
