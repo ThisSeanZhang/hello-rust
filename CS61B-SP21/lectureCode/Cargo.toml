@@ -1,0 +1,4 @@
+[workspace]
+members = [
+ "lec4_list1",
+]
