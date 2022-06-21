@@ -1,15 +1,13 @@
-use std::rc::Rc;
-
 struct IntList {
   pub first:  i64,
-  pub rest: Option<Rc<IntList>>,
+  pub rest: Option<Box<IntList>>,
 }
 
 impl IntList {
   pub fn new(num: i64, next: Option<IntList>) -> IntList {
     let rest = match next {
       None => None,
-      Some(n) => Some(Rc::new(n))
+      Some(n) => Some(Box::new(n))
     };
     IntList { first: num, rest }
   }
@@ -27,7 +25,7 @@ impl IntList {
     let mut p = self.rest.as_ref();
 		while p.is_some() {
 			total_size += 1;
-      p =p.unwrap().rest.as_ref();
+      p = p.unwrap().rest.as_ref();
 		}
 		return total_size;
 	}
