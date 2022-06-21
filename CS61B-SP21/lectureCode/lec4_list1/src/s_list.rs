@@ -1,10 +1,9 @@
-use std::{rc::Rc, borrow::BorrowMut, cell::RefCell};
+use std::cell::RefCell;
 
 #[derive(Debug)]
 pub struct SList {
-  sentinel: IntNode,
   size: u64,
-  head: Option<Box<RefCell<IntNode>>>
+  sentinel: Option<Box<RefCell<IntNode>>>
 }
 
 #[derive(Debug)]
@@ -31,25 +30,19 @@ impl SList {
   fn new(item_op: Option<i64>) -> SList {
     match item_op {
       Some(item) => SList {
-        sentinel: IntNode { item: i64::MAX, next: Some(Box::new(RefCell::new(IntNode{ item, next: None }))) },
         size: 1,
-        head: Some(Box::new(RefCell::new(IntNode { item: i64::MAX, next: Some(Box::new(RefCell::new(IntNode{ item, next: None }))) })))
+        sentinel: Some(Box::new(RefCell::new(IntNode { item: i64::MAX, next: Some(Box::new(RefCell::new(IntNode{ item, next: None }))) })))
       },
       None => SList {
-        sentinel: IntNode { item: i64::MAX, next: None },
         size: 0,
-        head: Some(Box::new(RefCell::new(IntNode { item: i64::MAX, next: None })))
+        sentinel: Some(Box::new(RefCell::new(IntNode { item: i64::MAX, next: None })))
       }
     }
   }
 
   fn add_first(&mut self, item: i64) {
     self.size += 1;
-    self.sentinel.next = Some(Box::new(RefCell::new(IntNode {
-      item,
-      next: self.sentinel.next.take()
-    })));
-    if let Some(head) = &mut self.head {
+    if let Some(head) = &mut self.sentinel {
       head.as_mut().get_mut().next = Some(Box::new(RefCell::new(IntNode {
         item,
         next: head.as_mut().get_mut().next.take()
@@ -59,7 +52,7 @@ impl SList {
 
   fn get_first(& self) ->  Option<i64> {
     // self.sentinel.next.as_ref().unwrap().borrow().item;
-    if let Some(item) = &self.head.as_ref().unwrap().borrow().next {
+    if let Some(item) = &self.sentinel.as_ref().unwrap().borrow().next {
       return Some(item.borrow().item);
     }
     None
@@ -74,12 +67,12 @@ impl SList {
   }
 
   fn get(&self, index: u64) -> Option<i64> {
-    SList::get_inner(&self.head.as_ref().unwrap().as_ref().borrow().next, index)
+    SList::get_inner(&self.sentinel.as_ref().unwrap().as_ref().borrow().next, index)
   }
 
   fn add_last(&mut self, item: i64) {
     self.size += 1;
-    let mut p = &mut self.head;
+    let mut p = &mut self.sentinel;
  		while let Some(in_next) = p {
       // let a = p.unwrap();
       if in_next.as_ref().borrow().next.is_some() {
