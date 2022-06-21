@@ -79,27 +79,6 @@ impl SList {
 
   fn add_last(&mut self, item: i64) {
     self.size += 1;
-    // if self.sentinel.next.is_none() {
-    //   self.sentinel.next = Some(Rc::new(IntNode {
-    //     item,
-    //     next: None
-    //   }));
-    //   return ;
-    // }
- 		// let mut p = &mut self.head;
- 		// while let Some(in_next) = p {
-    //   // let a = p.unwrap();
-    //   if in_next.as_ref().borrow().next.is_some() {
-    //     p = &mut in_next.as_mut().get_mut().next;
-    //   } else {
-    //     in_next.as_mut().get_mut().next = Some(Box::new(RefCell::new(IntNode {
-    //       item,
-    //       next: None
-    //     })));
-    //     break;
-    //   }
- 		// }
-
     let mut p = &mut self.head;
  		while let Some(in_next) = p {
       // let a = p.unwrap();
@@ -113,21 +92,6 @@ impl SList {
         break;
       }
  		}
-
-    // if let Some(in_next) = p {
-    //   in_next.as_mut().get_mut().next = Some(Box::new(RefCell::new(IntNode {
-    //     item,
-    //     next: None
-    //   })));
-    // }
-    // p.unwrap().as_mut().borrow().next = Some(Box::new(RefCell::new(IntNode {
-    //   item,
-    //   next: None
-    // })));
- 		// p.unwrap(). = Some(Rc::new(IntNode {
-    //   item,
-    //   next: None
-    // }));
   }
 
   fn size(&self) -> u64 {
