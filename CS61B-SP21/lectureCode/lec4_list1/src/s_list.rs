@@ -4,12 +4,29 @@ pub struct SList {
   sentinel: Option<Box<IntNode>>
 }
 
+
 #[derive(Debug)]
 struct IntNode {
   pub item: i64,
   pub next: Option<Box<IntNode>>
 }
-
+/// when not imp this when large tree will lead to stack overflowe
+/// 
+/// from [stackoverflow](https://stackoverflow.com/questions/28660362/thread-main-has-overflowed-its-stack-when-constructing-a-large-tree)
+/// The problem that you are experiencing is because you have a giant linked-list of nodes. 
+/// When that list is dropped, the first element tries to free all the members of the struct first. 
+/// That means that the second element does the same, and so on, until the end of the list. 
+/// This means that you will have a call stack that is proportional to the number of elements in your list!
+/// 
+impl Drop for IntNode {
+  fn drop(&mut self) {
+      if let Some(mut child) = self.next.take() {
+          while let Some(next) = child.next.take() {
+              child = next;
+          }
+      }
+  }
+}
 impl IntNode {
   fn new(item: i64, next: Option<IntNode>) -> IntNode {
     IntNode{
