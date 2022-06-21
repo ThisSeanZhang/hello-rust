@@ -65,6 +65,18 @@ impl SList {
     None
   }
 
+  fn get_inner(list: &Option<Box<RefCell<IntNode>>>, index: u64) -> Option<i64> {
+    if index == 1 {
+      Some(list.as_ref().unwrap().borrow().item)
+    } else {
+      SList::get_inner(&list.as_ref().unwrap().borrow().next, index - 1)
+    }
+  }
+
+  fn get(&self, index: u64) -> Option<i64> {
+    SList::get_inner(&self.head.as_ref().unwrap().as_ref().borrow().next, index)
+  }
+
   fn add_last(&mut self, item: i64) {
     self.size += 1;
     // if self.sentinel.next.is_none() {
@@ -142,6 +154,40 @@ mod tests {
     list.add_first(42);
     println!("{:?}", list);
     assert_eq!(list.size(), 1);
+  }
+
+  #[test]
+  fn when_slist_empty_add_first_twice() {
+    let mut list = SList::new(None);
+    list.add_first(42);
+    println!("{:?}", list);
+    list.add_first(64);
+    println!("{:?}", list);
+    assert_eq!(list.size(), 2);
+  }
+
+  #[test]
+  fn when_slist_empty_add_first_twice_and_get_first() {
+    let mut list = SList::new(None);
+    list.add_first(42);
+    println!("{:?}", list);
+    list.add_first(64);
+    println!("{:?}", list);
+    assert_eq!(list.get_first(), Some(64));
+    // get twice
+    assert_eq!(list.get_first(), Some(64));
+  }
+
+  #[test]
+  fn when_slist_empty_add_first_twice_and_get_index() {
+    let mut list = SList::new(None);
+    list.add_first(42);
+    list.add_first(64);
+    assert_eq!(list.get(1), Some(64));
+    println!("{:?}", list);
+    // get twice
+    assert_eq!(list.get(2), Some(42));
+    println!("{:?}", list);
   }
 
   #[test]
