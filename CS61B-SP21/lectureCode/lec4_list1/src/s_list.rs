@@ -1,15 +1,13 @@
-use std::cell::RefCell;
-
 #[derive(Debug)]
 pub struct SList {
   size: u64,
-  sentinel: Option<Box<RefCell<IntNode>>>
+  sentinel: Option<Box<IntNode>>
 }
 
 #[derive(Debug)]
 struct IntNode {
   pub item: i64,
-  pub next: Option<Box<RefCell<IntNode>>>
+  pub next: Option<Box<IntNode>>
 }
 
 impl IntNode {
@@ -17,7 +15,7 @@ impl IntNode {
     IntNode{
       item,
       next: if let Some(in_next) = next {
-        Some(Box::new(RefCell::new(in_next)))
+        Some(Box::new(in_next))
       } else {
         None
       }
@@ -27,47 +25,48 @@ impl IntNode {
 
 impl SList {
 
-  fn new(item_op: Option<i64>) -> SList {
+  pub fn new(item_op: Option<i64>) -> SList {
     match item_op {
       Some(item) => SList {
         size: 1,
-        sentinel: Some(Box::new(RefCell::new(IntNode { item: i64::MAX, next: Some(Box::new(RefCell::new(IntNode{ item, next: None }))) })))
+        sentinel: Some(Box::new(IntNode { item: i64::MAX, next: Some(Box::new(IntNode{ item, next: None })) }))
       },
       None => SList {
         size: 0,
-        sentinel: Some(Box::new(RefCell::new(IntNode { item: i64::MAX, next: None })))
+        sentinel: Some(Box::new(IntNode { item: i64::MAX, next: None }))
       }
     }
   }
 
-  fn add_first(&mut self, item: i64) {
+  pub fn add_first(&mut self, item: i64) {
     self.size += 1;
     if let Some(head) = &mut self.sentinel {
-      head.as_mut().get_mut().next = Some(Box::new(RefCell::new(IntNode {
+      let next = head.as_mut().next.take();
+      head.as_mut().next = Some(Box::new(IntNode {
         item,
-        next: head.as_mut().get_mut().next.take()
-      })));
+        next
+      }));
     }
   }
 
   fn get_first(& self) ->  Option<i64> {
     // self.sentinel.next.as_ref().unwrap().borrow().item;
-    if let Some(item) = &self.sentinel.as_ref().unwrap().borrow().next {
-      return Some(item.borrow().item);
+    if let Some(item) = &self.sentinel.as_ref().unwrap().next {
+      return Some(item.item);
     }
     None
   }
 
-  fn get_inner(list: &Option<Box<RefCell<IntNode>>>, index: u64) -> Option<i64> {
+  fn get_inner(list: &Option<Box<IntNode>>, index: u64) -> Option<i64> {
     if index == 1 {
-      Some(list.as_ref().unwrap().borrow().item)
+      Some(list.as_ref().unwrap().item)
     } else {
-      SList::get_inner(&list.as_ref().unwrap().borrow().next, index - 1)
+      SList::get_inner(&list.as_ref().unwrap().next, index - 1)
     }
   }
 
   fn get(&self, index: u64) -> Option<i64> {
-    SList::get_inner(&self.sentinel.as_ref().unwrap().as_ref().borrow().next, index)
+    SList::get_inner(&self.sentinel.as_ref().unwrap().as_ref().next, index)
   }
 
   fn add_last(&mut self, item: i64) {
@@ -75,13 +74,13 @@ impl SList {
     let mut p = &mut self.sentinel;
  		while let Some(in_next) = p {
       // let a = p.unwrap();
-      if in_next.as_ref().borrow().next.is_some() {
-        p = &mut in_next.as_mut().get_mut().next;
+      if in_next.as_ref().next.is_some() {
+        p = &mut in_next.as_mut().next;
       } else {
-        in_next.as_mut().get_mut().next = Some(Box::new(RefCell::new(IntNode {
+        in_next.as_mut().next = Some(Box::new(IntNode {
           item,
           next: None
-        })));
+        }));
         break;
       }
  		}
