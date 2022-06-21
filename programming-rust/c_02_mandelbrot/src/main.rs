@@ -121,7 +121,7 @@ fn render(pixels: &mut [u8],
 
 extern crate image;
 use image::ColorType;
-use image::png::PNGEncoder;
+use image::codecs::png::PngEncoder;
 use std::fs::File;
 /// Write the buffer `pixels`, whose dimensions are given by `bounds`, to the
 /// file named `filename`.
@@ -129,8 +129,8 @@ fn write_image(filename: &str, pixels: &[u8], bounds: (usize, usize))
  -> Result<(), std::io::Error>
 {
     let output = File::create(filename)?;
-    let encoder = PNGEncoder::new(output);
-    encoder.encode(&pixels, bounds.0 as u32, bounds.1 as u32, ColorType::Gray(8))?;
+    let encoder = PngEncoder::new(output);
+    encoder.encode(&pixels, bounds.0 as u32, bounds.1 as u32, ColorType::L8).unwrap_err();
     Ok(())
 }
 
@@ -162,7 +162,7 @@ fn main() {
                 let band_bounds = (bounds.0, height);
                 let band_upper_left = pixel_to_point(bounds, (0, top), upper_left, lower_right);
                 let band_lower_right = pixel_to_point(bounds, (bounds.0, top + height), upper_left, lower_right);
-                spawner.spawn(move || {
+                spawner.spawn(move |_| {
                     render(band, band_bounds, band_upper_left, band_lower_right);
                 });
             }
