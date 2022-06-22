@@ -1,4 +1,5 @@
 [workspace]
 members = [
  "lec4_list1",
+ "lec7_lists4",
 ]
