@@ -1,6 +1,8 @@
 use std::process::exit;
+use std::env::current_dir;
 
 use clap::Parser;
+use kvs::{KvStore, KvsError, Result};
 
 #[derive(Parser, Debug)]
 #[command(author, version, about, long_about = None)]
@@ -38,24 +40,35 @@ enum Action {
         key: String,
     }
 }
-fn main() {
+fn main() -> Result<()> {
 
     let args = Args::parse();
 
-   match args.action {
+    match args.action {
     Action::Set { key, value } => {
-        eprintln!("unimplemented");
-        exit(1);
+        let mut store = KvStore::open(current_dir()?)?;
+        store.set(key, value)?;
     },
     Action::Get { key } => {
-        eprintln!("unimplemented");
-        exit(1);
+        let mut store = KvStore::open(current_dir()?)?;
+        if let Some(value) = store.get(key)? {
+            println!("{}", value);
+        } else {
+            println!("Key not found");
+        }
     },
     Action::Rm { key } => {
-        eprintln!("unimplemented");
-        exit(1);
+        let mut store = KvStore::open(current_dir()?)?;
+        match store.remove(key) {
+            Ok(()) => {}
+            Err(KvsError::KeyNotFound) => {
+                println!("Key not found");
+                exit(1);
+            }
+            Err(e) => return Err(e),
+        }
     },
-   }
+    }
 
-
+    Ok(())
 }
