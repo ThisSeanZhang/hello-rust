@@ -126,11 +126,13 @@ impl KvStore {
     fn compact(&mut self) -> Result<()> {
         let compaction_gen = self.current_gen + 1;
         self.current_gen += 2;
+        // Write new data to a new file
         self.writer = new_log_file(&self.path, self.current_gen)?;
         self.readers.insert(self.current_gen, BufReaderWithPos::new(File::open(log_path(&self.path, self.current_gen))?)?);
         
-        let compaction_temp_name = format!("temp_{}", compaction_gen);
-        let mut compaction_writer = new_log_file(&self.path, &compaction_temp_name)?;
+        // compaction file
+        let mut compaction_writer = new_log_file(&self.path, &compaction_gen)?;
+        self.readers.insert(compaction_gen, BufReaderWithPos::new(File::open(log_path(&self.path, &compaction_gen))?)?);
         
         let mut new_pos = 0; // pos in the new log file.
         for cmd_pos in &mut self.index.values_mut() {
@@ -149,9 +151,6 @@ impl KvStore {
         }
         compaction_writer.flush()?;
 
-        // rename the compaction file
-        fs::rename(log_path(&self.path, compaction_temp_name), log_path(&self.path, compaction_gen))?;
-
         // remove stale log files.
         let stale_gens: Vec<_> = self
             .readers
@@ -159,7 +158,7 @@ impl KvStore {
             .filter(|&&gen| gen < compaction_gen)
             .cloned()
             .collect();
-        println!("delete files: {:?}", stale_gens);
+        
         for stale_gen in stale_gens {
             self.readers.remove(&stale_gen);
             fs::remove_file(log_path(&self.path, stale_gen))?;
