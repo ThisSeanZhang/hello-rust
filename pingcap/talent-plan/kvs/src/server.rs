@@ -51,14 +51,20 @@ impl<E: KvsEngine> KvsServer<E> {
             let req = req?;
             debug!("Receive request from {}: {:?}", peer_addr, req);
             let result = match req {
-                Request::Get { key } => self.engine.get(key),
-                Request::Set { key, value } => self.engine.set(key, value).and_then(|_| Ok(None)),
-                Request::Remove { key } => self.engine.remove(key).and_then(|_| Ok(None)),
+                Request::Get { key } => match self.engine.get(key) {
+                    Ok(data) => Response::Get(data),
+                    Err(e) => Response::Err(format!("{}", e)),
+                },
+                Request::Set { key, value } => match self.engine.set(key, value) {
+                    Ok(_) => Response::Set,
+                    Err(e) => Response::Err(format!("{}", e)),
+                },
+                Request::Remove { key } => match self.engine.remove(key) {
+                    Ok(_) => Response::Remove,
+                    Err(e) => Response::Err(format!("{}", e)),
+                },
             };
-            send_resp!(match result {
-                Ok(data) => Response::Ok(data),
-                Err(e) => Response::Err(format!("{}", e)),
-            });
+            send_resp!(result);
         }
         Ok(())
     }

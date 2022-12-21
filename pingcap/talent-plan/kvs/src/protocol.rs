@@ -8,7 +8,9 @@ pub enum Request {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-pub enum Response<T> {
-  Ok(Option<T>),
+pub enum Response {
+  Get(Option<String>),
+  Set,
+  Remove,
   Err(String)
 }

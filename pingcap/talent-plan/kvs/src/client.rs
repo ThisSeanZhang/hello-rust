@@ -28,8 +28,9 @@ impl KvsClient {
         self.writer.flush()?;
         let resp = Response::deserialize(&mut self.reader)?;
         match resp {
-            Response::Ok(data) => Ok(data),
+            Response::Get(data) => Ok(data),
             Response::Err(msg) => Err(KvsError::StringError(msg)),
+            _ => Err(KvsError::StringError("Invalid response".to_owned())),
         }
     }
 
@@ -37,10 +38,11 @@ impl KvsClient {
     pub fn set(&mut self, key: String, value: String) -> Result<()> {
         serde_json::to_writer(&mut self.writer, &Request::Set { key, value })?;
         self.writer.flush()?;
-        let resp:Response<Option<()>> = Response::deserialize(&mut self.reader)?;
+        let resp:Response = Response::deserialize(&mut self.reader)?;
         match resp {
-            Response::Ok(_) => Ok(()),
+            Response::Set => Ok(()),
             Response::Err(msg) => Err(KvsError::StringError(msg)),
+            _ => Err(KvsError::StringError("Invalid response".to_owned())),
         }
     }
 
@@ -48,10 +50,11 @@ impl KvsClient {
     pub fn remove(&mut self, key: String) -> Result<()> {
         serde_json::to_writer(&mut self.writer, &Request::Remove { key })?;
         self.writer.flush()?;
-        let resp:Response<Option<()>> = Response::deserialize(&mut self.reader)?;
+        let resp:Response = Response::deserialize(&mut self.reader)?;
         match resp {
-            Response::Ok(_) => Ok(()),
+            Response::Remove => Ok(()),
             Response::Err(msg) => Err(KvsError::StringError(msg)),
+            _ => Err(KvsError::StringError("Invalid response".to_owned())),
         }
     }
 }
