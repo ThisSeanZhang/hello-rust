@@ -29,6 +29,8 @@ predicates = "2.1.4"
 tempfile = "3.0.7"
 walkdir = "2.3.2"
 criterion = "0.4.0"
+crossbeam-utils = "0.8.14"
+panic-control = "0.1.4"
 
 [dev-dependencies.rand]
 version = "0.8.5"
