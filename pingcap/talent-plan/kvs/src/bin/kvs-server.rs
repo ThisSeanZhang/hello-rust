@@ -1,5 +1,6 @@
 use clap::{Parser, ValueEnum};
 use kvs::*;
+use kvs::thread_pool::{ThreadPool, RayonThreadPool};
 use log::LevelFilter;
 use log::{error, info, warn};
 use std::env::current_dir;
@@ -73,17 +74,16 @@ fn run(opt: Args) -> Result<()> {
     info!("Storage engine: {:?}", opt.engine);
     info!("Listening on {}", opt.addr);
 
-    // write engine to engine file
-    fs::write(current_dir()?.join("engine"), format!("{:?}", opt.engine))?;
+    let pool = RayonThreadPool::new(num_cpus::get() as u32)?;
 
     match opt.engine {
-        Engine::Kvs => run_with_engine(KvStore::open(current_dir()?)?, opt.addr),
-        Engine::Sled => run_with_engine(SledKvsEngine::new(sled::open(current_dir()?)?), opt.addr),
+        Engine::Kvs => run_with_engine(KvStore::open(current_dir()?)?, pool, opt.addr),
+        Engine::Sled => run_with_engine(SledKvsEngine::new(sled::open(current_dir()?)?), pool, opt.addr),
     }
 }
 
-fn run_with_engine<E: KvsEngine>(engine: E, addr: SocketAddr) -> Result<()> {
-    let server = KvsServer::new(engine);
+fn run_with_engine<E: KvsEngine, P: ThreadPool>(engine: E, pool: P, addr: SocketAddr) -> Result<()> {
+    let server = KvsServer::new(engine, pool);
     server.run(addr)
 }
 
@@ -101,6 +101,7 @@ fn check_and_cache_engine(engine: Engine) -> Result<()> {
   }
   match previous_engine {
     None => {
+      // write engine to engine file
       fs::write(previous_engine_path, format!("{:?}", engine))?;
       Ok(())
     },

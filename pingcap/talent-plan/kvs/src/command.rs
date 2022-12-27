@@ -20,7 +20,7 @@ impl Command {
 
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub(crate) struct CommandPos {
     pub(crate) gen: u64,
     pub(crate) pos: u64,
