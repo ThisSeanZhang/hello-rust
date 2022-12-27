@@ -23,6 +23,12 @@ crossbeam = "0.8.2"
 crossbeam-skiplist="0.1.0"
 rayon = "1.6.1"
 
+tokio-serde-json = "0.3.0"
+
+[dependencies.tokio]
+version="1.23.0"
+features=["rt"]
+
 [dependencies.clap]
 version = "4.0.29"
 features = [ "derive" ]
