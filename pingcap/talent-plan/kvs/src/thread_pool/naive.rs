@@ -3,6 +3,7 @@ use std::thread;
 use super::ThreadPool;
 
 /// NaiveThreadPool
+#[derive(Clone)]
 pub struct NaiveThreadPool {
 
 }

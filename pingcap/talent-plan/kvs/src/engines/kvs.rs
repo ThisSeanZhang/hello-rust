@@ -2,14 +2,17 @@ use std::{
     collections::BTreeMap,
     path::{PathBuf, Path},
     fs::{self, File, OpenOptions},
-    io::{BufWriter, Write, Seek, SeekFrom, self, Read, BufReader}, ffi::OsStr, sync::{Arc, atomic::{AtomicU64, Ordering}, Mutex}, cell::RefCell
+    io::{BufWriter, Write, Seek, SeekFrom, self, Read, BufReader}, ffi::OsStr, sync::{Arc, atomic::{AtomicU64, Ordering}, Mutex}, cell::RefCell, future::Future,
 };
 
+use crossbeam::queue::ArrayQueue;
 use crossbeam_skiplist::SkipMap;
+use futures::TryFutureExt;
 use log::error;
 use serde_json::Deserializer;
+use tokio::sync::oneshot;
 
-use crate::{error::Result, KvsError, KvsEngine};
+use crate::{error::Result, KvsError, KvsEngine, thread_pool::ThreadPool};
 use crate::command::{Command, CommandPos};
 
 fn log_path(path: &Path, gen: impl ToString) -> PathBuf {
@@ -20,19 +23,19 @@ const COMPACTION_THRESHOLD: u64 = 1024 * 1024;
 
 /// The `KvStore` stores string key/value pairs.
 #[derive(Clone)]
-pub struct KvStore {
+pub struct KvStore<P: ThreadPool> {
 
     // current log file writer
     writer: Arc<Mutex<KvStoreWriter>>,
-    // gen reader dict
-    reader: KvStoreReader,
     // command store index
     index: Arc<SkipMap<String, CommandPos>>,
+    thread_pool: P,
+    reader_pool: Arc<ArrayQueue<KvStoreReader>>,
 }
 
-impl KvStore {
+impl <P: ThreadPool> KvStore<P> {
     /// create KvStore through screen given path
-    pub fn open(path: impl Into<PathBuf>) -> Result<KvStore> {
+    pub fn open(path: impl Into<PathBuf>, concurrency: u32) -> Result<Self> {
         
         let path:Arc<PathBuf> = Arc::new(path.into());
         // if path not exists
@@ -72,41 +75,87 @@ impl KvStore {
             index: Arc::clone(&index),
         };
 
+        let thread_pool = P::new(concurrency)?;
+        let reader_pool = Arc::new(ArrayQueue::new(concurrency as usize));
+        for _ in 1..concurrency {
+            reader_pool.push(reader.clone()).map_err(|_| "push reader error").unwrap();
+        }
+         reader_pool.push(reader).map_err(|_| "push reader error").unwrap();
+
         Ok(KvStore {
-            reader,
+            thread_pool,
+            reader_pool,
             index,
             writer: Arc::new(Mutex::new(writer)),
         })
     }
 
 }
-impl KvsEngine for KvStore {
+impl <P: ThreadPool>KvsEngine for KvStore<P> {
 
     /// Sets the value of a string key to a string.
     ///
     /// If the key already exists, the previous value will be overwritten.
-    fn set(&self, key: String, value: String) -> Result<()> {
-        self.writer.lock().unwrap().set(key, value)
+    fn set(&self, key: String, value: String) -> Box<dyn Future<Output = Result<Result<()>>> + Send>{
+        let writer = self.writer.clone();
+        let (tx, rx) = oneshot::channel();
+        self.thread_pool.spawn(move || {
+            let res = writer.lock().unwrap().set(key, value);
+            if tx.send(res).is_err() {
+                error!("Receiving end is dropped");
+            }
+        });
+        Box::new(
+            rx.map_err(KvsError::from)
+        )
     }
 
     /// Gets the string value of a given string key.
     ///
     /// Returns `None` if the given key does not exist.
-    fn get(&self, key: String) -> Result<Option<String>> {
-        if let Some(cmd_pos) = self.index.get(&key) {
-            if let Command::Set { value, .. } = self.reader.read_command(*cmd_pos.value())? {
-                Ok(Some(value))
-            } else {
-                Err(KvsError::UnexpectedCommandType)
+    fn get(&self, key: String) -> Box<dyn Future<Output = Result<Result<Option<String>>>> + Send> {
+        let reader_pool = self.reader_pool.clone();
+        let index = self.index.clone();
+        let (tx, rx) = oneshot::channel();
+        self.thread_pool.spawn(move || {
+            let res = (|| {
+                if let Some(cmd_pos) = index.get(&key) {
+                    let reader = reader_pool.pop().unwrap();
+                    let res = if let Command::Set { value, .. } =
+                        reader.read_command(*cmd_pos.value())?
+                    {
+                        Ok(Some(value))
+                    } else {
+                        Err(KvsError::UnexpectedCommandType)
+                    };
+                    reader_pool.push(reader).map_err(|_| "push reader error").unwrap();
+                    res
+                } else {
+                    Ok(None)
+                }
+            })();
+            if tx.send(res).is_err() {
+                error!("Receiving end is dropped");
             }
-        } else {
-            Ok(None)
-        }
+        });
+        Box::new(
+            rx.map_err(KvsError::from)
+        )
     }
 
     /// Remove a given key.
-    fn remove(&self, key: String) -> Result<()> {
-        self.writer.lock().unwrap().remove(key)
+    fn remove(&self, key: String) -> Box<dyn Future<Output = Result<Result<()>>> + Send> {
+        let writer = self.writer.clone();
+        let (tx, rx) = oneshot::channel();
+        self.thread_pool.spawn(move || {
+            let res = writer.lock().unwrap().remove(key);
+            if tx.send(res).is_err() {
+                error!("Receiving end is dropped");
+            }
+        });
+        Box::new(
+            rx.map_err(KvsError::from)
+        )
     }
 
 }

@@ -34,6 +34,8 @@ pub enum KvsError {
     /// Error with a string message
     #[error("{0}")]
     StringError(String),
+    #[error("{0}")]
+    RecvError(#[from] tokio::sync::oneshot::error::RecvError)
 }
 
 /// Result type for kvs.

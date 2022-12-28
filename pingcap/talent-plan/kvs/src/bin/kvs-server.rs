@@ -74,11 +74,12 @@ fn run(opt: Args) -> Result<()> {
     info!("Storage engine: {:?}", opt.engine);
     info!("Listening on {}", opt.addr);
 
-    let pool = RayonThreadPool::new(num_cpus::get() as u32)?;
+    let concurrency = num_cpus::get() as u32;
+    let pool = RayonThreadPool::new(concurrency)?;
 
     match opt.engine {
-        Engine::Kvs => run_with_engine(KvStore::open(current_dir()?)?, pool, opt.addr),
-        Engine::Sled => run_with_engine(SledKvsEngine::new(sled::open(current_dir()?)?), pool, opt.addr),
+        Engine::Kvs => run_with_engine(KvStore::open(current_dir()?, concurrency)?, pool, opt.addr),
+        Engine::Sled => run_with_engine(SledKvsEngine::new(sled::open(current_dir()?)?, concurrency), pool, opt.addr),
     }
 }
 
