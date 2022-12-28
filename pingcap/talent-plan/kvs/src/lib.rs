@@ -1,3 +1,4 @@
+#![feature(async_fn_in_trait)]
 #![deny(missing_docs)]
 //! A simple key/value store.
 

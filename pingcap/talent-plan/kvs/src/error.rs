@@ -34,9 +34,12 @@ pub enum KvsError {
     /// Error with a string message
     #[error("{0}")]
     StringError(String),
+    /// RecvError
     #[error("{0}")]
     RecvError(#[from] tokio::sync::oneshot::error::RecvError)
 }
+
+
 
 /// Result type for kvs.
 pub type Result<T> = std::result::Result<T, KvsError>;

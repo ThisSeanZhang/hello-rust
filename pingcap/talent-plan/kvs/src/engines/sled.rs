@@ -1,9 +1,8 @@
 
 use super::KvsEngine;
 use crate::{KvsError, Result, thread_pool::ThreadPool};
-use futures::{Future, TryFutureExt, FutureExt};
 use log::error;
-use sled::{Db};
+use sled::Db;
 use tokio::sync::oneshot;
 
 /// Wrapper of `sled::Db`
@@ -15,14 +14,14 @@ pub struct SledKvsEngine<P: ThreadPool> {
 
 impl<P: ThreadPool> SledKvsEngine<P> {
     /// Creates a `SledKvsEngine` from `sled::Db`.
-    pub fn new(db: Db, concurrency: u32) -> Result<Self> {
+    pub fn open(db: Db, concurrency: u32) -> Result<Self> {
         let pool = P::new(concurrency)?;
         Ok(SledKvsEngine { pool, db })
     }
 }
 
 impl<P: ThreadPool> KvsEngine for SledKvsEngine<P> {
-    fn set(&self, key: String, value: String) -> Box<dyn Future<Output = Result<Result<()>>> + Send> {
+    async fn set(&self, key: String, value: String) -> Result<()> {
         let db = self.db.clone();
         let (tx, rx) = oneshot::channel();
         self.pool.spawn(move || {
@@ -35,11 +34,12 @@ impl<P: ThreadPool> KvsEngine for SledKvsEngine<P> {
                 error!("Receiving end is dropped");
             }
         });
-        Box::new(
-            rx.map_err(KvsError::from)
-        )
+        match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(KvsError::from(e))
+        }
     }
-    fn get(&self, key: String) -> Box<dyn Future<Output = Result<Result<Option<String>>>> + Send> {
+    async fn get(&self, key: String) -> Result<Option<String>> {
         let db = self.db.clone();
         let (tx, rx) = oneshot::channel();
         self.pool.spawn(move || {
@@ -54,12 +54,13 @@ impl<P: ThreadPool> KvsEngine for SledKvsEngine<P> {
                 error!("Receiving end is dropped");
             }
         });
-        Box::new(
-            rx.map_err(KvsError::from)
-        )
+        match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(KvsError::from(e))
+        }
     }
 
-    fn remove(&self, key: String) -> Box<dyn Future<Output = Result<Result<()>>> + Send> {
+    async fn remove(&self, key: String) -> Result<()> {
         let db = self.db.clone();
         let (tx, rx) = oneshot::channel();
         self.pool.spawn(move || {
@@ -72,8 +73,9 @@ impl<P: ThreadPool> KvsEngine for SledKvsEngine<P> {
                 error!("Receiving end is dropped");
             }
         });
-        Box::new(
-            rx.map_err(KvsError::from)
-        )
+        match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(KvsError::from(e))
+        }
     }
 }

@@ -2,12 +2,11 @@ use std::{
     collections::BTreeMap,
     path::{PathBuf, Path},
     fs::{self, File, OpenOptions},
-    io::{BufWriter, Write, Seek, SeekFrom, self, Read, BufReader}, ffi::OsStr, sync::{Arc, atomic::{AtomicU64, Ordering}, Mutex}, cell::RefCell, future::Future,
+    io::{BufWriter, Write, Seek, SeekFrom, self, Read, BufReader}, ffi::OsStr, sync::{Arc, atomic::{AtomicU64, Ordering}, Mutex}, cell::RefCell
 };
 
 use crossbeam::queue::ArrayQueue;
 use crossbeam_skiplist::SkipMap;
-use futures::TryFutureExt;
 use log::error;
 use serde_json::Deserializer;
 use tokio::sync::oneshot;
@@ -96,7 +95,7 @@ impl <P: ThreadPool>KvsEngine for KvStore<P> {
     /// Sets the value of a string key to a string.
     ///
     /// If the key already exists, the previous value will be overwritten.
-    fn set(&self, key: String, value: String) -> Box<dyn Future<Output = Result<Result<()>>> + Send>{
+    async fn set(&self, key: String, value: String) -> Result<()> {
         let writer = self.writer.clone();
         let (tx, rx) = oneshot::channel();
         self.thread_pool.spawn(move || {
@@ -105,15 +104,16 @@ impl <P: ThreadPool>KvsEngine for KvStore<P> {
                 error!("Receiving end is dropped");
             }
         });
-        Box::new(
-            rx.map_err(KvsError::from)
-        )
+        match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(KvsError::from(e))
+        }
     }
 
     /// Gets the string value of a given string key.
     ///
     /// Returns `None` if the given key does not exist.
-    fn get(&self, key: String) -> Box<dyn Future<Output = Result<Result<Option<String>>>> + Send> {
+    async fn get(&self, key: String) -> Result<Option<String>> {
         let reader_pool = self.reader_pool.clone();
         let index = self.index.clone();
         let (tx, rx) = oneshot::channel();
@@ -138,13 +138,14 @@ impl <P: ThreadPool>KvsEngine for KvStore<P> {
                 error!("Receiving end is dropped");
             }
         });
-        Box::new(
-            rx.map_err(KvsError::from)
-        )
+        match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(KvsError::from(e))
+        }
     }
 
     /// Remove a given key.
-    fn remove(&self, key: String) -> Box<dyn Future<Output = Result<Result<()>>> + Send> {
+    async fn remove(&self, key: String) -> Result<()> {
         let writer = self.writer.clone();
         let (tx, rx) = oneshot::channel();
         self.thread_pool.spawn(move || {
@@ -153,9 +154,10 @@ impl <P: ThreadPool>KvsEngine for KvStore<P> {
                 error!("Receiving end is dropped");
             }
         });
-        Box::new(
-            rx.map_err(KvsError::from)
-        )
+        match rx.await {
+            Ok(v) => v,
+            Err(e) => Err(KvsError::from(e))
+        }
     }
 
 }

@@ -1,5 +1,6 @@
 use crate::protocol::{Request, Response};
 use crate::{KvsError, Result};
+use log::info;
 use serde::Deserialize;
 use serde_json::de::{Deserializer, IoRead};
 use std::io::{BufReader, BufWriter, Write};
@@ -25,7 +26,9 @@ impl KvsClient {
     /// Get the value of a given key from the server.
     pub fn get(&mut self, key: String) -> Result<Option<String>> {
         serde_json::to_writer(&mut self.writer, &Request::Get { key })?;
+        self.writer.write(b"\r\n")?;
         self.writer.flush()?;
+        info!("Send data to Server");
         let resp = Response::deserialize(&mut self.reader)?;
         match resp {
             Response::Get(data) => Ok(data),
@@ -37,6 +40,7 @@ impl KvsClient {
     /// Set the value of a string key in the server.
     pub fn set(&mut self, key: String, value: String) -> Result<()> {
         serde_json::to_writer(&mut self.writer, &Request::Set { key, value })?;
+        self.writer.write(b"\r\n")?;
         self.writer.flush()?;
         let resp:Response = Response::deserialize(&mut self.reader)?;
         match resp {
@@ -49,6 +53,7 @@ impl KvsClient {
     /// Remove a string key in the server.
     pub fn remove(&mut self, key: String) -> Result<()> {
         serde_json::to_writer(&mut self.writer, &Request::Remove { key })?;
+        self.writer.write(b"\r\n")?;
         self.writer.flush()?;
         let resp:Response = Response::deserialize(&mut self.reader)?;
         match resp {

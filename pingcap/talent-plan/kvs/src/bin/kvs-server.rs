@@ -1,6 +1,6 @@
 use clap::{Parser, ValueEnum};
 use kvs::*;
-use kvs::thread_pool::{ThreadPool, RayonThreadPool};
+use kvs::thread_pool::RayonThreadPool;
 use log::LevelFilter;
 use log::{error, info, warn};
 use std::env::current_dir;
@@ -72,20 +72,31 @@ fn main() {
 fn run(opt: Args) -> Result<()> {
     info!("kvs-server {}", env!("CARGO_PKG_VERSION"));
     info!("Storage engine: {:?}", opt.engine);
-    info!("Listening on {}", opt.addr);
 
     let concurrency = num_cpus::get() as u32;
-    let pool = RayonThreadPool::new(concurrency)?;
 
     match opt.engine {
-        Engine::Kvs => run_with_engine(KvStore::open(current_dir()?, concurrency)?, pool, opt.addr),
-        Engine::Sled => run_with_engine(SledKvsEngine::new(sled::open(current_dir()?)?, concurrency), pool, opt.addr),
+        Engine::Kvs => run_with_engine(KvStore::<RayonThreadPool>::open(current_dir()?, concurrency)?, opt.addr),
+        Engine::Sled => run_with_engine(SledKvsEngine::<RayonThreadPool>::open(sled::open(current_dir()?)?, concurrency)?, opt.addr),
     }
 }
 
-fn run_with_engine<E: KvsEngine, P: ThreadPool>(engine: E, pool: P, addr: SocketAddr) -> Result<()> {
-    let server = KvsServer::new(engine, pool);
-    server.run(addr)
+fn run_with_engine<E: KvsEngine>(engine: E, addr: SocketAddr) -> Result<()> {
+    let server = KvsServer::new(engine);
+    tokio::runtime::Builder::new_current_thread()
+    .worker_threads(1)
+    .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+          
+          info!("Start Engine");
+          if let Err(e) = server.run(addr).await {
+            error!("{}", e);
+            exit(1);
+          }
+        });
+    Ok(())
 }
 
 fn check_and_cache_engine(engine: Engine) -> Result<()> {
