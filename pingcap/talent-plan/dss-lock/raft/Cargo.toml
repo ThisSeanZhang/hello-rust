@@ -1,0 +1,34 @@
+[package]
+name = "raft"
+version = "0.1.0"
+authors = [
+    "Neil Shen <overvenus@gmail.com>",
+    "ShuNing <nolouch@gmail.com>",
+    "Connor <zbk602423539@gmail.com>",
+    "庄天翼 <zty0826@gmail.com>",
+    "MIT 6.824 <6824-staff@lists.csail.mit.edu>"
+]
+edition = "2018"
+publish = false
+
+[dependencies]
+async-trait = "0.1"
+futures = "0.3"
+futures-timer = "3.0"
+log = "0.4"
+env_logger = "0.10.0"
+prost = "0.6"
+prost-derive = "0.6"
+rand = "0.7"
+
+labcodec = { path = "../labcodec" }
+labrpc = { path = "../labrpc" }
+linearizability = { path = "../linearizability"}
+
+serde={ version ="1.0", features = ["derive"] }
+serde_json = "1.0"
+
+[dev-dependencies]
+
+[build-dependencies]
+prost-build = "0.6"
