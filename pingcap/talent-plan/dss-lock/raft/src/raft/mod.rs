@@ -106,7 +106,7 @@ impl RaftLog {
         }
     }
     fn get(&self, index: u64) -> Option<(u64, Vec<u8>)> {
-        if self.data.len() == 0 {
+        if index == 0 {
             return Some((0, vec![]));
         }
         if let Some((term, data)) = self.data.get(index as usize - 1) {
@@ -115,13 +115,33 @@ impl RaftLog {
             None
         }
     }
-    fn get_last_info(&self) -> Option<(u64, u64)> {
-        if self.data.len() == 0 {
-            return Some((0, 0));
+    fn get_append_info(&self, index: u64) -> Option<(u64, Option<Entry>)> {
+        if index != 0 {
+            match (self.get(index - 1), self.get(index)) {
+                (Some((prev_log_term, _)), Some((term, data))) => {
+                    Some((prev_log_term, Some(Entry{ term: term.clone(), data: data.clone()})))
+                },
+                (Some((prev_log_term, _) ), None) => {
+                    Some((prev_log_term, None))
+                },
+                _ => {
+                    error!("wrong index: {index}");
+                    panic!()
+                }
+            }
+        } else {
+            Some((0, None))
         }
-        let index = self.data.len() - 1;
-        if let Some((term, _)) = self.data.get(index) {
-            Some((*term, index as u64))
+    }
+
+    fn truncate(&mut self, size: u64) {
+        self.data.truncate(size as usize);
+    }
+
+    fn get_last_info(&self) -> Option<(u64, u64)> {
+        let index = self.len();
+        if let Some((term, _)) = self.get(index) {
+            Some((term, index))
         } else {
             None
         }
@@ -209,7 +229,7 @@ impl Raft {
             voted_for: None,
             log: RaftLog::new(),
             commit_index: 0,
-            last_applied: 0,
+            last_applied: 1,
             next_index:  vec![0; client_size],
             match_index:  vec![0; client_size],
             apply_ch,
@@ -225,12 +245,17 @@ impl Raft {
     }
 
     fn commit_command(&mut self, leader_commit: u64) {
-        for index in self.commit_index..leader_commit {
+        let no = self.me;
+        let start_commit_index = self.commit_index + 1;
+        if leader_commit < start_commit_index { return; }
+        info!("No: {no}, start commit range is: ({} ~ {}]", self.commit_index, leader_commit);
+        for index in start_commit_index..=leader_commit {
             if let Some((_, data)) = self.log.get(index) {
-                self.apply_ch.start_send(ApplyMsg::Command { data: data.clone(), index }).unwrap();
+                info!("No: {no}, commit index: {index}, last_applied: {}", self.last_applied);
+                self.apply_ch.unbounded_send(ApplyMsg::Command { data: data.clone(), index }).unwrap();
+                self.commit_index = index;
             }
         }
-        self.commit_index = leader_commit;
     }
 
     /// save Raft's persistent state to stable storage,
@@ -277,15 +302,18 @@ impl Raft {
         // }
     }
 
-    fn get_append_entries_args(&self, next_index:u64, match_index:u64) -> Option<AppendEntriesArgs> {
+    fn get_append_entries_args(&self, index:usize) -> Option<AppendEntriesArgs> {
+        let next_index = self.next_index[index];
+        let match_index = self.match_index[index];
         let need_data = next_index - match_index == 1;
-        if let Some((term , data)) = self.log.get(next_index) {
+        if let Some((prev_log_term, entry)) = self.log.get_append_info(next_index) {
+            info!("using index: {next_index}, get prev_log_term: {prev_log_term}, entry: {entry:?}");
             Some(AppendEntriesArgs{
                 term: self.state.term,
                 leader_id:self.me as u64,
-                prev_log_term: term,
+                prev_log_term,
                 prev_log_index: next_index - 1,
-                entries: if need_data && !data.is_empty() { vec![Entry { term, data }] } else { vec![] },
+                entries: if need_data && entry.is_some() { vec![entry.unwrap()] } else { vec![] },
                 leader_commit:self.commit_index
             })
         } else {
@@ -297,6 +325,7 @@ impl Raft {
         let no = self.me;
         let append_timeout_build = || futures_timer::Delay::new(Duration::from_millis(HEART_BEAT_MILLIS / 2)).fuse();
         while let Ok((index, client)) = self.append_channel.1.try_recv() {
+            warn!("No:{no}, create appen client index: {index}");
             let client_clone = client.clone();
             let rf_clone = raft.clone();
             let return_clinet = self.append_channel.0.clone();
@@ -308,9 +337,7 @@ impl Raft {
                             return_clinet.send((index, client_clone)).unwrap();
                             break;
                         }
-                        let next_log_index = rf.next_index[index];
-                        let match_log_index = rf.match_index[index];
-                        rf.get_append_entries_args(next_log_index, match_log_index)
+                        rf.get_append_entries_args(index)
                     } else {
                         None
                     };
@@ -328,11 +355,24 @@ impl Raft {
                         };
                         // let result = client_clone.append_entries(&args).await.map_err(Error::Rpc);
                         if let Some(Ok(AppendEntriesReply{ term, success, match_index})) = result {
-                            info!("No:{no} to :{index}, AppendEntries term: {term}, result: {success}, index: {match_index}");
-                            if let Ok(mut rf) = rf_clone.try_lock() {
+                            info!("No:{no} to :{index}, AppendEntries term: {term}, result: {success}, match_index: {match_index}");
+                            if let Ok(mut rf) = rf_clone.lock() {
                                 if success {
                                     rf.match_index[index] = match_index;
                                     rf.next_index[index] = rf.last_applied.min(match_index + 1);
+                                    info!("No:{no}, update index :{index}, leader last_applied: {}, match_index: {match_index}, next_index: {}", rf.last_applied, rf.next_index[index]);
+                                    let mut match_size = 1;
+                                    let mut min_match_index = rf.last_applied;
+                                    for &each in rf.match_index.iter() {
+                                        if each > rf.commit_index {
+                                            match_size += 1;
+                                            min_match_index = min_match_index.min(each);
+                                        }
+                                    }
+                                    if match_size * 2 > rf.peers.len() {
+                                        rf.commit_command(min_match_index);
+                                    }
+                                    // same as leader
                                     if rf.next_index[index] == rf.last_applied {
                                         return_clinet.send((index, client_clone)).unwrap();
                                         break;
@@ -344,7 +384,7 @@ impl Raft {
                                     break;
                                 } else {
                                     info!("No:{no}, Argument: {args:?}");
-                                    rf.match_index[index] -= 1;
+                                    rf.next_index[index] -= 1;
                                 }
                             }
                         } else {
@@ -379,8 +419,8 @@ impl Raft {
         RequestVoteArgs {
             term: self.state.term,
             candidate_id: self.me as u64,
-            last_log_index: term,
-            last_log_term: index,
+            last_log_index: index,
+            last_log_term: term,
         }
     }
     fn send_request_vote_v2(&mut self, raft: Arc<Mutex<Raft>>) {
@@ -389,8 +429,8 @@ impl Raft {
         self.state.per_election();
     //     info!("No: {no}, after per_election term is {}", self.state.term);
         self.voted_for = Some(no);
-        info!("No:{no}, start election in term: {}", self.state.term);
         let args = Arc::new(self.get_vote_request_arg());
+        info!("No:{no}, start election in term: {}, args: {args:?}", self.state.term);
         let vote = Arc::new(AtomicU64::new(1));
         let vote_term = Arc::new(self.state.term);
         let client_num = Arc::new(self.peers.len() as u64);
@@ -423,14 +463,17 @@ impl Raft {
                             if let Ok(mut raft) = rf.try_lock() {
                                 info!("No:{no}, i been the leader in {}", raft.state.term);
                                 raft.state.is_leader = true;
+                                raft.last_applied = raft.log.next_index();
                                 raft.match_index = vec![0; raft.peers.len()];
                                 raft.next_index = vec![raft.log.next_index(); raft.peers.len()];
                                 raft.send_request_append(rf.clone());
                             }
                         }
+                    } else {
+                        warn!("No:{no}, can not get vote granted from index: {index}, because term: {term}");
                     }
                 } else {
-                    info!("No:{no}, can not get vote granted {:?} from {index}", res);
+                    warn!("No:{no}, can not get vote granted from {index}");
                 }
             });
         }
@@ -507,22 +550,18 @@ impl Raft {
     //     }
     // }
 
-    fn start<M>(&self, command: &M) -> Result<(u64, u64)>
+    fn start<M>(&mut self, command: &M) -> Result<(u64, u64)>
     where
         M: labcodec::Message,
     {
-        let index = 0;
-        let term = 0;
-        let is_leader = true;
         let mut buf = vec![];
         labcodec::encode(command, &mut buf).map_err(Error::Encode)?;
         // Your code here (2B).
+        let term = self.state.term;
+        self.log.push((term, buf));
+        self.last_applied += 1;
 
-        if is_leader {
-            Ok((index, term))
-        } else {
-            Err(Error::NotLeader)
-        }
+        Ok((self.log.len(), term))
     }
 
     fn cond_install_snapshot(
@@ -589,7 +628,7 @@ impl Node {
         // let (raft_event_sender, rx2) =  mpsc::unbounded::<RaftEvent>();
         let (stop_tx, stop_rx) =  mpsc::channel::<()>(1);
 
-        let pool = ThreadPool::builder().pool_size(4).create().unwrap();
+        let pool = ThreadPool::builder().pool_size(1).create().unwrap();
         let node = Node {
             // no: raft.me,
             raft: Arc::new(Mutex::new(raft)),
@@ -665,18 +704,11 @@ impl Node {
     where
         M: labcodec::Message,
     {
-        // Your code here.
-        // Example:
-        // self.raft.start(command)
-        info!("{command:?}");
-        if let Ok(raft) = self.raft.lock() {
+        if let Ok(mut raft) = self.raft.lock() {
             if raft.state.is_leader() {
-                // Err(Error::NotLeader)
-            } else {
-                // Err(Error::NotLeader)
-            }
-        }
-        Err(Error::NotLeader)
+                raft.start(command)
+            } else { Err(Error::NotLeader) }
+        } else { Err(Error::NotLeader) }
     }
 
     /// The current term of this peer.
@@ -752,6 +784,7 @@ impl RaftService for Node {
     // CAVEATS: Please avoid locking or sleeping here, it may jam the network.
     async fn request_vote(&self, args: RequestVoteArgs) -> labrpc::Result<RequestVoteReply> {
         if let Ok(mut raft) = self.raft.try_lock() {
+            let no = raft.me;
             let RequestVoteArgs{
                 term,
                 candidate_id,
@@ -761,6 +794,7 @@ impl RaftService for Node {
 
             // if term is smaller then current server return false
             if raft.state.term > term {
+                error!("No: {no}, cause current term larger then the candidate: {candidate_id}");
                 return Ok(RequestVoteReply{
                     term: raft.state.term,
                     vote_granted: false,
@@ -768,6 +802,7 @@ impl RaftService for Node {
             }
             // The current node has voted
             if raft.state.term == term && raft.voted_for.is_some() {
+                error!("No: {no}, cause current servie is vote to: {:?}", raft.voted_for);
                 return Ok(RequestVoteReply{
                     term: raft.state.term,
                     vote_granted: false,
@@ -779,8 +814,9 @@ impl RaftService for Node {
 
             // if candidate log id is not up-to-date as current server log
             let current_log_len = raft.log.len();
-            if let Some((current_last_term, _)) = raft.log.get(last_log_index) {
-                if last_log_term >= current_last_term && last_log_index >= current_log_len {
+            if let Some((current_last_term, _)) = raft.log.get(current_log_len) {
+                info!("No: {no}, current_log_len: {current_log_len}, current_last_term: {current_last_term}");
+                if last_log_term > current_last_term || (last_log_term == current_last_term && last_log_index >= current_log_len) {
                     // reset election timeout
                     self.timer_beat.unbounded_send(()).unwrap();
                     raft.voted_for = Some(candidate_id as usize);
@@ -841,7 +877,9 @@ impl RaftService for Node {
                         success: false
                     })
                 } else {
-                    match_index = prev_log_index;
+                    // error!("{:?}", raft.log);
+                    raft.log.truncate(prev_log_index);
+                    // error!("{:?}", raft.log);
                 }
             } else {
                 return Ok(AppendEntriesReply{
@@ -854,6 +892,8 @@ impl RaftService for Node {
             for Entry { term, data } in entries {
                 raft.log.push((term, data));
             }
+            match_index = raft.log.len();
+            raft.last_applied = raft.log.next_index();
             // commit log
             raft.commit_command(leader_commit);
             
