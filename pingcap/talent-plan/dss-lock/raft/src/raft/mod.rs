@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use std::sync::atomic::AtomicU64;
 use std::sync::mpsc::{sync_channel, Receiver, SyncSender};
 use std::time::{Duration, Instant};
@@ -93,16 +94,18 @@ impl Default for PersistentState {
 
 // }
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 struct RaftLog {
     data: Vec<(u64, Vec<u8>)>,
+    term_index: HashMap<u64, u64>,
 }
 
 impl RaftLog {
 
     fn new() -> RaftLog {
         RaftLog{
-            data: vec![]
+            data: vec![],
+            term_index: HashMap::new()
         }
     }
     fn get(&self, index: u64) -> Option<(u64, Vec<u8>)> {
@@ -115,26 +118,51 @@ impl RaftLog {
             None
         }
     }
-    fn get_append_info(&self, index: u64) -> Option<(u64, Option<Entry>)> {
-        if index != 0 {
-            match (self.get(index - 1), self.get(index)) {
-                (Some((prev_log_term, _)), Some((term, data))) => {
-                    Some((prev_log_term, Some(Entry{ term: term.clone(), data: data.clone()})))
-                },
-                (Some((prev_log_term, _) ), None) => {
-                    Some((prev_log_term, None))
-                },
-                _ => {
-                    error!("wrong index: {index}");
-                    panic!()
+
+    fn get_append_logs(&self, need_logs: bool, index: u64, end_index: u64) -> Option<(u64, Vec<Entry>)> {
+        let mut logs = vec![];
+        let prev_term = if index == 0 { 0 } else {
+            self.get(index - 1).map(|(prev_log_term, _)| prev_log_term).unwrap_or(0)
+        };
+
+        if need_logs {
+            for index in index..end_index {
+                if let Some((term, data)) = self.get(index) {
+                    logs.push(Entry{ term: term.clone(), data: data.clone()});
                 }
             }
-        } else {
-            Some((0, None))
         }
+
+        Some((prev_term, logs))
+    }
+
+    // fn get_append_info(&self, index: u64) -> Option<(u64, Option<Entry>)> {
+    //     if index != 0 {
+    //         match (self.get(index - 1), self.get(index)) {
+    //             (Some((prev_log_term, _)), Some((term, data))) => {
+    //                 Some((prev_log_term, Some(Entry{ term: term.clone(), data: data.clone()})))
+    //             },
+    //             (Some((prev_log_term, _) ), None) => {
+    //                 Some((prev_log_term, None))
+    //             },
+    //             _ => {
+    //                 error!("wrong index: {index}");
+    //                 panic!()
+    //             }
+    //         }
+    //     } else {
+    //         Some((0, None))
+    //     }
+    // }
+
+    fn get_term_appear_index(&self, term: u64) -> Option<u64> {
+        self.term_index.get(&term).map(|v| v.clone())
     }
 
     fn truncate(&mut self, size: u64) {
+        // warn!("before truncate === : {:?}",  self.term_index);
+        self.term_index.retain(|_, v| *v <= size);
+        // warn!("after truncate === : {:?}",  self.term_index);
         self.data.truncate(size as usize);
     }
 
@@ -156,7 +184,10 @@ impl RaftLog {
     }
 
     fn push(&mut self, item: (u64, Vec<u8>)) {
-        self.data.push(item)
+        let key = item.0;
+        self.data.push(item);
+        let index = self.len();
+        self.term_index.entry(key).or_insert(index);
     }
 }
 
@@ -239,7 +270,6 @@ impl Raft {
 
         // initialize from state persisted before a crash
         rf.restore(&raft_state);
-        rf.last_applied = rf.log.next_index();
         
         rf
     }
@@ -248,10 +278,20 @@ impl Raft {
         let no = self.me;
         let start_commit_index = self.commit_index + 1;
         if leader_commit < start_commit_index { return; }
+
+        // leader need check the last commit log in current term
+        if self.state.is_leader() {
+            if let Some((last_commit_log_term, _)) = self.log.get(leader_commit) {
+                if last_commit_log_term != self.state.term {
+                    return;
+                }
+            }
+        }
+
         info!("No: {no}, start commit range is: ({} ~ {}]", self.commit_index, leader_commit);
         for index in start_commit_index..=leader_commit {
             if let Some((_, data)) = self.log.get(index) {
-                info!("No: {no}, commit index: {index}, last_applied: {}", self.last_applied);
+                // info!("No: {no}, commit index: {index}, last_applied: {}", self.last_applied);
                 self.apply_ch.unbounded_send(ApplyMsg::Command { data: data.clone(), index }).unwrap();
                 self.commit_index = index;
             }
@@ -267,6 +307,16 @@ impl Raft {
         // labcodec::encode(&self.xxx, &mut data).unwrap();
         // labcodec::encode(&self.yyy, &mut data).unwrap();
         // self.persister.save_raft_state(data);
+
+        let persister_state = PersistentState {
+            current_term: self.state.term,
+            voted_for: self.voted_for,
+            log: self.log.clone()
+        };
+        let vec_data = serde_json::to_vec(&persister_state);
+        if let Ok(data) = vec_data {
+            self.persister.save_raft_state(data);
+        }
     }
 
     /// restore previously persisted state.
@@ -278,42 +328,30 @@ impl Raft {
         
         match serde_json::from_slice::<PersistentState>(data) {
             Ok(persist) => {
+                warn!("restore persist: {persist:?}");
                 self.state.term = persist.current_term;
                 self.voted_for = persist.voted_for;
                 self.log = persist.log;
-                // self.commit_index = persist.log.len() as u64 - 1 ;
-                // self.last_applied = persist.log.len();
-                // self.persist = persist;
             }
             Err(e) => {
                 panic!("{:?}", e);
             }
         }
-        // Your code here (2C).
-        // Example:
-        // match labcodec::decode(data) {
-        //     Ok(o) => {
-        //         self.xxx = o.xxx;
-        //         self.yyy = o.yyy;
-        //     }
-        //     Err(e) => {
-        //         panic!("{:?}", e);
-        //     }
-        // }
+        self.last_applied = self.log.next_index();
     }
 
     fn get_append_entries_args(&self, index:usize) -> Option<AppendEntriesArgs> {
         let next_index = self.next_index[index];
         let match_index = self.match_index[index];
         let need_data = next_index - match_index == 1;
-        if let Some((prev_log_term, entry)) = self.log.get_append_info(next_index) {
+        if let Some((prev_log_term, entry)) = self.log.get_append_logs(need_data, next_index, self.last_applied) {
             info!("using index: {next_index}, get prev_log_term: {prev_log_term}, entry: {entry:?}");
             Some(AppendEntriesArgs{
                 term: self.state.term,
                 leader_id:self.me as u64,
                 prev_log_term,
                 prev_log_index: next_index - 1,
-                entries: if need_data && entry.is_some() { vec![entry.unwrap()] } else { vec![] },
+                entries: entry,
                 leader_commit:self.commit_index
             })
         } else {
@@ -354,8 +392,8 @@ impl Raft {
                             }
                         };
                         // let result = client_clone.append_entries(&args).await.map_err(Error::Rpc);
-                        if let Some(Ok(AppendEntriesReply{ term, success, match_index})) = result {
-                            info!("No:{no} to :{index}, AppendEntries term: {term}, result: {success}, match_index: {match_index}");
+                        if let Some(Ok(AppendEntriesReply{ term, success, match_index, conflict_term, conflict_index})) = result {
+                            info!("No:{no} to :{index}, AppendEntries term: {term}, result: {success}, match_index: {match_index}, conflict_term: {conflict_term}, conflict_index: {conflict_index}");
                             if let Ok(mut rf) = rf_clone.lock() {
                                 if success {
                                     rf.match_index[index] = match_index;
@@ -383,8 +421,8 @@ impl Raft {
                                     return_clinet.send((index, client_clone)).unwrap();
                                     break;
                                 } else {
-                                    info!("No:{no}, Argument: {args:?}");
-                                    rf.next_index[index] -= 1;
+                                    info!("No:{no} to :{index}, AppendEntries term: {term}, result: {success}, match_index: {match_index}, conflict_term: {conflict_term}, conflict_index: {conflict_index}");
+                                    rf.next_index[index] = conflict_index;
                                 }
                             }
                         } else {
@@ -429,6 +467,7 @@ impl Raft {
         self.state.per_election();
     //     info!("No: {no}, after per_election term is {}", self.state.term);
         self.voted_for = Some(no);
+        self.persist();
         let args = Arc::new(self.get_vote_request_arg());
         info!("No:{no}, start election in term: {}, args: {args:?}", self.state.term);
         let vote = Arc::new(AtomicU64::new(1));
@@ -560,7 +599,7 @@ impl Raft {
         let term = self.state.term;
         self.log.push((term, buf));
         self.last_applied += 1;
-
+        self.persist();
         Ok((self.log.len(), term))
     }
 
@@ -820,6 +859,7 @@ impl RaftService for Node {
                     // reset election timeout
                     self.timer_beat.unbounded_send(()).unwrap();
                     raft.voted_for = Some(candidate_id as usize);
+                    raft.persist();
                     return Ok(RequestVoteReply{
                         term: raft.state.term,
                         vote_granted: true,
@@ -854,7 +894,9 @@ impl RaftService for Node {
                 return Ok(AppendEntriesReply{
                     term: raft.state.term,
                     match_index,
-                    success: false
+                    success: false,
+                    conflict_term: 0,
+                    conflict_index: 0,
                 })
             }
 
@@ -874,7 +916,9 @@ impl RaftService for Node {
                     return Ok(AppendEntriesReply{
                         term: raft.state.term,
                         match_index,
-                        success: false
+                        success: false,
+                        conflict_term: log_term,
+                        conflict_index: raft.log.get_term_appear_index(log_term).expect(format!("use log_term: {:?}, log: {:?}", log_term, raft.log).as_str())
                     })
                 } else {
                     // error!("{:?}", raft.log);
@@ -885,13 +929,16 @@ impl RaftService for Node {
                 return Ok(AppendEntriesReply{
                     term: raft.state.term,
                     match_index,
-                    success: false
+                    success: false,
+                    conflict_term: 0,
+                    conflict_index: raft.log.next_index()
                 })
             }
             
             for Entry { term, data } in entries {
                 raft.log.push((term, data));
             }
+            raft.persist();
             match_index = raft.log.len();
             raft.last_applied = raft.log.next_index();
             // commit log
@@ -900,7 +947,9 @@ impl RaftService for Node {
             return Ok(AppendEntriesReply{
                 term: raft.state.term,
                 match_index,
-                success: true
+                success: true,
+                conflict_term: 0,
+                conflict_index: 0
             })
         } else {
             Err(labrpc::Error::Unimplemented("ERROR".into()))
