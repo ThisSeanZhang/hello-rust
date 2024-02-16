@@ -3,13 +3,14 @@ members = [
     "post-01",
     "post-02",
     "post-03",
+    "post-04",
 ]
 resolver = "2"
 
 
 
-[profile.dev]
-panic = "abort"
+# [profile.dev]
+# panic = "abort"
 
-[profile.release]
-panic = "abort"
+# [profile.release]
+# panic = "abort"
