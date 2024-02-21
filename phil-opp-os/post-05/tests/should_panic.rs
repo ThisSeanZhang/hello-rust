@@ -2,7 +2,7 @@
 #![no_main]
 
 use core::panic::PanicInfo;
-use post_04::{exit_qemu, serial_print, serial_println, QemuExitCode};
+use post_05::{exit_qemu, serial_print, serial_println, QemuExitCode};
 
 /// 这个测试文件被视为只有一个测试用例
 #[no_mangle]
