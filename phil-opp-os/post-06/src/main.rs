@@ -17,12 +17,12 @@ pub extern "C" fn _start() -> ! {
 
     post_06::init();
 
-    // invoke a breakpoint exception
-    x86_64::instructions::interrupts::int3();
+    fn stack_overflow() {
+        stack_overflow(); // for each recursion, the return address is pushed
+    }
 
-    unsafe {
-        *(0xdeadbeef as *mut u8) = 42;
-    };
+    // trigger a stack overflow
+    stack_overflow();
     
     // as before
     #[cfg(test)]
