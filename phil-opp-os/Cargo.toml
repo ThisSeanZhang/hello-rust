@@ -6,6 +6,7 @@ members = [
     "post-04",
     "post-05",
     "post-06",
+    "post-07",
 ]
 resolver = "2"
 
