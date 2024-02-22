@@ -29,7 +29,7 @@ pub extern "C" fn _start() -> ! {
     test_main();
 
     println!("It did not crash!");
-    loop {}
+    post_07::hlt_loop();
 }
 
 /// https://github.com/rust-lang/rust-analyzer/issues/4490
@@ -37,7 +37,7 @@ pub extern "C" fn _start() -> ! {
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    post_07::hlt_loop();
 }
 
 #[cfg(test)]
