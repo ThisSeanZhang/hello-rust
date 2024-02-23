@@ -22,7 +22,7 @@ pc-keyboard = "0.5.0"
 version = "0.9.23"
 features = [
     # 将 页表 直接映射到虚拟内存, 将会导致内存碎片
-    # "map_physical_memory"
+    "map_physical_memory"
     # 将 页表 通过递归的方式进行存储访问
     # "recursive_page_table"
 ]
