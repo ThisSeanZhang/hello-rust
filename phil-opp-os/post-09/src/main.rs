@@ -19,6 +19,7 @@ entry_point!(kernel_main);
 fn kernel_main(boot_info: &'static BootInfo) -> ! {
     // use post_09::memory::active_level_4_table;
     use post_09::memory;
+    use post_09::memory::BootInfoFrameAllocator;
     use x86_64::{structures::paging::Page, VirtAddr}; 
     // use x86_64::structures::paging::PageTable;
     
@@ -28,13 +29,16 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
 
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
-    let mut frame_allocator = memory::EmptyFrameAllocator;
+    // let mut frame_allocator = memory::EmptyFrameAllocator;
 
+    let mut frame_allocator = unsafe {
+        BootInfoFrameAllocator::init(&boot_info.memory_map)
+    };
 
-    // 要求分配不存在的内存时将会发生崩溃
-    // let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
+    // 要求分配不存在的内存时将会发生崩溃, 创建了内存分配器 就不会错误了
+    let page = Page::containing_address(VirtAddr::new(0xdeadbeaf000));
     // map an unused page
-    let page = Page::containing_address(VirtAddr::new(0));
+    // let page = Page::containing_address(VirtAddr::new(0));
     memory::create_example_mapping(page, &mut mapper, &mut frame_allocator);
 
     // write the string `New!` to the screen through the new mapping
