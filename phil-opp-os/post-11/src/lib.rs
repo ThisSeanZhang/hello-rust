@@ -2,6 +2,7 @@
 
 #![cfg_attr(test, no_main)]
 
+#![feature(const_mut_refs)]
 
 // 开启自定义的测试方法 需要在 no_std 的情况下使用
 #![feature(custom_test_frameworks)]
