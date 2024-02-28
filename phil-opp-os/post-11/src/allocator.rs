@@ -11,10 +11,15 @@ use x86_64::{
 
 pub mod bump;
 pub mod linked_list;
+pub mod fixed_size_block;
 
-use linked_list::LinkedListAllocator;
+use fixed_size_block::FixedSizeBlockAllocator;
 #[global_allocator]
-static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
+static ALLOCATOR: Locked<FixedSizeBlockAllocator> = Locked::new(FixedSizeBlockAllocator::new());
+
+// use linked_list::LinkedListAllocator;
+// #[global_allocator]
+// static ALLOCATOR: Locked<LinkedListAllocator> = Locked::new(LinkedListAllocator::new());
 
 // use bump::BumpAllocator;
 // #[global_allocator]
