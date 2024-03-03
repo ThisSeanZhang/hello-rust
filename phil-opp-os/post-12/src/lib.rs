@@ -21,6 +21,7 @@ pub mod gdt;
 pub mod memory;
 extern crate alloc;
 pub mod allocator;
+pub mod task;
 
 use core::panic::PanicInfo;
 #[cfg(test)]
