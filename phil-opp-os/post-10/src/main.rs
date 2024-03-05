@@ -24,7 +24,7 @@ fn kernel_main(boot_info: &'static BootInfo) -> ! {
     use post_10::memory;
     use post_10::allocator; 
     use post_10::memory::BootInfoFrameAllocator;
-    use x86_64::{structures::paging::Page, VirtAddr}; 
+    use x86_64::VirtAddr; 
     // use x86_64::structures::paging::PageTable;
     
     println!("Hello World{}", "!");
