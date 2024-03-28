@@ -34,7 +34,7 @@ default-features = false
 features = ["alloc"]
 
 [dependencies.bootloader]
-version = "0.9.23"
+version = "0.9.28"
 features = [
     # 将 页表 直接映射到虚拟内存, 将会导致内存碎片
     "map_physical_memory"
