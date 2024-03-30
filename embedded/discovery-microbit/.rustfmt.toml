@@ -1,0 +1,11 @@
+# https://rust-lang.github.io/rustfmt/
+max_width = 120
+# https://rust-lang.github.io/rustfmt/?version=v1.7.0&search=#binop_separator
+binop_separator = "Front"
+newline_style="Unix"
+normalize_comments=true
+group_imports="StdExternalCrate"
+tab_spaces=4
+
+short_array_element_width_threshold=60
+array_width=60
