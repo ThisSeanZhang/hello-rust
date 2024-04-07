@@ -6,6 +6,6 @@ newline_style="Unix"
 normalize_comments=true
 group_imports="StdExternalCrate"
 tab_spaces=4
-
+fn_call_width=60
 short_array_element_width_threshold=60
 array_width=60

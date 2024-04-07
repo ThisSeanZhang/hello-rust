@@ -95,3 +95,33 @@ enabled = true
 [default.gdb]
 enabled = false
 ```
+
+# 串口设备
+检索已有的 tty 设备
+```shell
+dmesg | tail | grep -i tty
+# 检查设备
+ls -l /dev/ttyACM0
+crw-rw---- 1 root uucp 166, 0 Mar31日 00:09 /dev/ttyACM0
+# 可以尝试写入内容
+echo 'Hello, world!' > /dev/ttyACM0
+```
+## 使用 minicom 进行连接
+配置
+```shell
+$ cat ~/.minirc.dfl
+pu baudrate 115200
+pu bits 8
+pu parity N
+pu stopbits 1
+pu rtscts No
+pu xonxoff No
+```
+几个特殊按键
+
+* Ctrl+A + Z. Minicom Command Summary
+* Ctrl+A + C. Clear the screen
+* Ctrl+A + X. Exit and reset
+* Ctrl+A + Q. Quit with no reset
+
+
