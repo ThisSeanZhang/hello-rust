@@ -2,5 +2,6 @@
 members = [
     "01-rtt-check",
     "02-led-roulette",
-    "03-uart"
+    "03-uart",
+    "04-i2c"
 ]
