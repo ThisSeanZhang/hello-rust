@@ -7,12 +7,16 @@ use panic_rtt_target as _;
 use rtt_target::{rprintln, rtt_init_print};
 
 mod calibration;
+use crate::calibration::calc_calibration;
+use crate::calibration::calibrated_measurement;
+
+mod led;
 use lsm303agr::{AccelOutputDataRate, Lsm303agr, MagOutputDataRate};
 use microbit::{display::blocking::Display, hal::Timer};
 use microbit::{hal::twim, pac::twim0::frequency::FREQUENCY_A};
 
-use crate::calibration::calc_calibration;
-use crate::calibration::calibrated_measurement;
+use crate::led::direction_to_led;
+use crate::led::Direction;
 
 #[entry]
 fn main() -> ! {
@@ -37,6 +41,21 @@ fn main() -> ! {
         while !sensor.mag_status().unwrap().xyz_new_data {}
         let mut data = sensor.mag_data().unwrap();
         data = calibrated_measurement(data, &calibration);
-        rprintln!("x: {}, y: {}, z: {}", data.x, data.y, data.z);
+
+        let dir = match (data.x > 0, data.y > 0) {
+            // Quadrant I
+            (true, true) => Direction::NorthEast,
+            // Quadrant II
+            (false, true) => Direction::NorthWest,
+            // Quadrant III
+            (false, false) => Direction::SouthWest,
+            // Quadrant IV
+            (true, false) => Direction::SouthEast,
+        };
+
+        // use the led module to turn the direction into an LED arrow
+        // and the led display functions from chapter 5 to display the
+        // arrow
+        display.show(&mut timer, direction_to_led(dir), 100);
     }
 }
