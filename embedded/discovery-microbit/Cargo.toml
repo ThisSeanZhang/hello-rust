@@ -5,4 +5,5 @@ members = [
     "03-uart",
     "04-i2c",
     "05-led-compass",
+    "06-punch-o-meter",
 ]
