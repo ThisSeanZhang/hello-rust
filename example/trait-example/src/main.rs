@@ -5,8 +5,7 @@ fn expensive_calculation(_n: &i32) {
     sleep(Duration::from_secs(1));
 }
 
-fn main() {
-    let v = vec![1, 2, 3];
+fn progress(v: Vec<i32>) {
 
     let mut i = 1;
 
@@ -15,4 +14,9 @@ fn main() {
         i += 1;
         expensive_calculation(n);
     }
+}
+
+fn main() {
+    let v = vec![1, 2, 3];
+    progress(v);
 }
