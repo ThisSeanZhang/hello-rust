@@ -5,18 +5,18 @@ fn expensive_calculation(_n: &i32) {
     sleep(Duration::from_secs(1));
 }
 
-fn progress(v: Vec<i32>) {
+fn progress<T>(v: Vec<T>, f: fn(&T)->()) {
 
     let mut i = 1;
 
     for n in v.iter() {
         println!("{}{}", CLEAR, "*".repeat(i));
         i += 1;
-        expensive_calculation(n);
+        f(n);
     }
 }
 
 fn main() {
     let v = vec![1, 2, 3];
-    progress(v);
+    progress(v, expensive_calculation);
 }
