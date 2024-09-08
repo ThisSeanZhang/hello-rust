@@ -1,0 +1,9 @@
+[package]
+name = "sock-diag"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+netlink-packet-sock-diag="*"
+netlink-sys = { version = "0.8.4" }
+netlink-packet-core = { version = "0.7.0" }
