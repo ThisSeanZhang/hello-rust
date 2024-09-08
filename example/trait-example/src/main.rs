@@ -30,7 +30,8 @@ trait ProgressIteratorExt: Sized {
 }
 
 /// for **all type** <Iter> impl ProgressIteratorExt
-impl<Iter> ProgressIteratorExt for Iter {
+impl<Iter> ProgressIteratorExt for Iter
+where Iter: Iterator {
     fn progress(self) -> Progress<Self> {
         Progress::new(self)
     }
@@ -41,12 +42,6 @@ fn expensive_calculation(_n: &i32) {
 }
 
 fn main() {
-
-    // you can write this
-    let x = 1.progress();
-    let y = "blah".progress();
-    // but can not iter it
-    // for _ in x {}
 
     let v = vec![1, 2, 3];
 
