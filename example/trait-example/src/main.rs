@@ -5,8 +5,8 @@ fn expensive_calculation(_n: &i32) {
     sleep(Duration::from_secs(1));
 }
 
-fn progress<T, Iter>(iter: Iter, f: fn(T)->())
-where Iter: Iterator<Item = T>{
+fn progress<Iter>(iter: Iter, f: fn(Iter::Item)->())
+where Iter: Iterator{
 
     let mut i = 1;
 
